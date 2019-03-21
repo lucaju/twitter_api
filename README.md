@@ -16,10 +16,10 @@ Node.js comes with NPM
 ### 3. Install project dependecies
 - Open Terminal
 - Navigate to the folder you saved this project.
-- execute: npm init
+- execute: `npm init`
 
 ### 4. Run
-In the folder's project, run: node index
+In the folder's project, run: `node index`
 
 ### 5. Define the users you want to get the data from.
 There are 3 ways to do this.
@@ -30,7 +30,7 @@ e.g ["user1","user2"]
 
 #### b. Inline command
 You can override the config file passing the users names directly
-e.g node index --users:"user1,user2"
+e.g `node index --users:"user1,user2"`
 
 #### c. Runtime
 If the config file is empty and no names is passed for executuon, the app will ask you to set a Twitter screen_name to collect their followers
