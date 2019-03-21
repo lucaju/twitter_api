@@ -48,7 +48,7 @@ function setup() {
 			{
 				type: 'input',
 				name: 'users',
-				message: 'Set a Twitter screen_name collect their followers: '
+				message: 'Set a Twitter screen_name to collect their followers: '
 			},
 		])
 		.then(res => {
