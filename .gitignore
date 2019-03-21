@@ -1,6 +1,8 @@
 # folders
 /results
 
+twitter.credentials.json
+
 # files
 package-lock.json
 .DS_Store
