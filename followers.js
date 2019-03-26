@@ -10,7 +10,7 @@ const Timer = require('tiny-timer');
 const Twitter = require('twitter');
 
 const twitterCredentials = require('./twitter.credentials.json');
-const screen_names = require('./screen_names.json');
+const screen_names = require('./config.follower.json').followers;
 
 // npm install twitter-stream-channels -> to filter tweets by hastag while using stream
 
