@@ -1,0 +1,5 @@
+{
+    "localServerURI": "mongodb://localhost:27017",
+    "remoteServerURI": "mongodb+srv://lucaju:Dreaming.80@fluxoart-ik2c8.gcp.mongodb.net/test?retryWrites=true",
+    "database": "napoli-social-movements"
+}

@@ -1,104 +1,95 @@
 const chalk = require('chalk');
 const MongoClient = require('mongodb').MongoClient;
+const MongoConfig = require ('./mongo.config.json');
 
 //Mongo DB
-const useRemoteMongoDB = false; //false
-let mongoURI = 'mongodb://localhost:27017';
-if (useRemoteMongoDB) mongoURI = 'mongodb+srv://lucaju:Dreaming.80@fluxoart-ik2c8.gcp.mongodb.net/test?retryWrites=true';
 
 const MongoAPI = function MongoAPI() {
 
+	const useRemoteMongoDB = false; //false
+	const mongoURI = (useRemoteMongoDB == false) ? MongoConfig.localServerURI : MongoConfig.remoteServerURI;
+	const dbName =  MongoConfig.database;
+
 	const mongoConnect = function mongoConnect() {
 		return new Promise(
-			(resolve) => {
+			async (resolve) => {
 				const client = new MongoClient(mongoURI, { useNewUrlParser: true });
-				client.connect(err => {
-
-					if (err) {
-						console.error(err);
-						return;
-					}
-					// console.log('mongo connected')
-					resolve(client);
-				});
+				await client.connect();
+				resolve(client);
 			});
 	};
 
 	this.insertMany = function insertMany(collection,data) {
 		return new Promise(
-			(resolve) => {
-				mongoConnect()
-					.then(client => {
+			async (resolve) => {
 
-						const mongoCollection = client.db('napoli-social-movements').collection(collection);
-						// console.log('mongo saving')
+				const client = await mongoConnect();
+					
+				const mongoCollection = client.db(dbName).collection(collection);
+				const result = await mongoCollection.insertMany(data);
 
-						mongoCollection.insertMany(data)
-							.then(result => {
-								// console.log(chalk.blue(`${result.ops.length} items inserted`));
-								client.close();
-								// console.log('mongo disconected')
-								resolve(result.ops);
-							})
-							.catch(err => {
-								console.log(chalk.red(err));
-							});
-
-					}).catch(err => {
-						console.log(chalk.red(err));
-					});
+				console.log(chalk.blue(`${result.ops.length} items inserted`));
+				client.close();
+				
+				resolve(result.ops);
+					
 			});
+
 	};
 
 	this.insertOne = function insertOne(collection,item) {
 		
 		return new Promise(
-			(resolve) => {
-				mongoConnect()
-					.then(client => {
+			async (resolve) => {
 
-						const mongoCollection = client.db('napoli-social-movements').collection(collection);
+				const client = await mongoConnect();
+					
+				const mongoCollection = client.db(dbName).collection(collection);
+				const result = await mongoCollection.insertOne(item);
 
-						mongoCollection.insertOne(item)
-							.then(result => {
-								console.log(chalk.blue(`1 item inserted`));
-								client.close();
-								// console.log('mongo disconected')
-								resolve(result.ops);
-							})
-							.catch(err => {
-								console.log(chalk.red(err));
-							});
-
-					}).catch(err => {
-						console.log(chalk.red(err));
-					});
+				console.log(chalk.blue('1 item inserted'));
+				client.close();
+				
+				resolve(result.ops);
+					
 			});
 	};
 
 
 	this.find = function find(collection,query) {
 		return new Promise(
-			(resolve) => {
-				mongoConnect()
-					.then(client => {
+			async (resolve) => {
 
-						const mongoCollection = client.db('napoli-social-movements').collection(collection);
+				const client = await mongoConnect();
+					
+				const mongoCollection = client.db(dbName).collection(collection);
+				const result = await mongoCollection.find(query).toArray();
 
-						mongoCollection.find(query).toArray()
-							.then(result => {
-								// console.log(result);
-								client.close();
-								resolve(result);
-							})
-							.catch(err => {
-								console.log(chalk.red(err));
-							});
-
-					}).catch(err => {
-						console.log(chalk.red(err));
-					});
+				client.close();
+				resolve(result);
+					
 			});
+
+		// (resolve) => {
+		// 	mongoConnect()
+		// 		.then(client => {
+
+		// 			const mongoCollection = client.db(dbName).collection(collection);
+
+		// 			mongoCollection.find(query).toArray()
+		// 				.then(result => {
+		// 					// console.log(result);
+		// 					client.close();
+		// 					resolve(result);
+		// 				})
+		// 				.catch(err => {
+		// 					console.log(chalk.red(err));
+		// 				});
+
+		// 		}).catch(err => {
+		// 			console.log(chalk.red(err));
+		// 		});
+		// });
 	};
 
 }

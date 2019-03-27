@@ -7,48 +7,41 @@ const jsonfile = require('jsonfile');
 const log = require('single-line-log').stdout;
 const luxon = require('luxon');
 const Timer = require('tiny-timer');
-const Twitter = require('twitter');
+const Twitter = require('twit');
 
 const twitterCredentials = require('./twitter.credentials.json');
-const screen_names = require('./config.follower.json').followers;
-
-// npm install twitter-stream-channels -> to filter tweets by hastag while using stream
+const screen_names = require('./config.followers.json');
 
 //----------Init
 
-const client = new Twitter(twitterCredentials);
-const now = luxon.DateTime.local();
+const twitter = new Twitter(twitterCredentials);
 
-let screen_name;
 let screen_name_collection = [];
 let rateLimits = {};
 
 //----------------------------------
 
 //Initical Setup
-
 if (argv.users) {
+
 	// Parser CLI variables
 	screen_name_collection = argv.users.split(',');
 	start();
+
 } else if (screen_names.length > 0) {
+
 	// Get data from Json 
 	screen_name_collection = screen_names;
 	start();
+
 } else {
-	// ask
-	setup();
-}
-
-//setup question in the beginning
-function setup() {
-
+	// ask - setup question in the beginning
 	inquirer
 		.prompt([
 			{
 				type: 'input',
 				name: 'users',
-				message: 'Set a Twitter screen_name to collect their followers: '
+				message: 'Type users\' screen name from who you want get a list of followers (separate users by comma[,]): '
 			},
 		])
 		.then(res => {
@@ -57,61 +50,84 @@ function setup() {
 				start();
 			}
 		});
+
 }
+
+
 //----------------------------------
 
-// if (!screen_name) {
-
-// 	console.log('Set a Twitter screen_name collect their followers');
-
-// } else {
-
-// 	getFollowersIDsByName(screen_name).then(res => {
-// 		return getUsersInfoByID(res);
-// 	}).then(() => {
-// 		console.log(chalk.blue('end'));
-// 	});
-// }
-
 async function start() {
-	// getFollowersIDsByName(screen_name).then(res => {
-	// 	return getUsersInfoByID(res);
-	// }).then(() => {
-	// 	console.log(chalk.blue('end'));
-	// });
 
+	console.log(chalk.magenta('Start'));
+	
+	//get rate limits()
+	await getRateLimit();
+
+	//get followers
 	for (const user of screen_name_collection) {
-		screen_name = user;
-		const IDs = await getFollowersIDsByName(screen_name);
-		await getUsersInfoByID(IDs);
+		const userAcountInfo = await getUserInfo(user);
+		const IDs = await getFollowersIDsByName(userAcountInfo);
+		const followersList = await getUsersInfoByID(userAcountInfo,IDs);
+		await saveJson('followers', userAcountInfo, followersList);
 	}
 
-	console.log(chalk.blue('end'));
+	console.log(chalk.magenta('End'));
 }
 
+
+//----------------------------------
+
+
+async function getUserInfo(user) {
+
+	console.log(chalk.blue(`Get ${user}'s info`));
+
+	//set endpoint
+	const familyResource = 'users';
+	const endpoint = '/users/show';
+
+	//parameters
+	const params = {
+		screen_name: user,
+	};
+
+	return new Promise(
+		async (resolve) => {
+			//check locally stored limit (wait for new window if needed)
+			await checkLimit(familyResource, `${endpoint}/:id`);
+
+			//decrease remaining calls available
+			// console.log('current limit: ', rateLimits[familyResource][endpoint].remaining);
+			rateLimits[familyResource][`${endpoint}/:id`].remaining--;
+
+			//Call Twitter API
+			const results = await twitter.get(endpoint, params);
+
+			// console.log(results.data);
+			resolve(results.data);
+
+		});
+}
 
 
 //----------------------------------
 
 
 // get followers ID
-async function getFollowersIDsByName(screen_name) {
+async function getFollowersIDsByName(userInfo) {
 
-	console.log(chalk.blue(`Get ${screen_name}'s Followers (IDs)`));
+	console.log(chalk.blue(`Get ${userInfo.screen_name}'s Followers (IDs)`));
 
 	//set list to store all IDs
 	let idList = [];
 
 	//build Twitter API request
 	let requestParams = {
-		screen_name: screen_name,
+		screen_name: userInfo.screen_name,
 		stringify_ids: true,
 		count: 5000, //max: 5000,
 		cursor: -1,
 	};
-
-	//get ratelinit()
-	await getRateLimit();
 
 	return new Promise(
 		async (resolve) => {
@@ -123,28 +139,26 @@ async function getFollowersIDsByName(screen_name) {
 				const res = await getFollowers(requestParams);
 
 				//save cursor and data
-				requestParams.cursor = res.next_cursor_str;
-				idList = _.concat(idList, res.ids);
+				requestParams.cursor = res.data.next_cursor_str;
+				idList = _.concat(idList, res.data.ids);
 
 				//save partial list
-				saveJson('followers-ids-partial', idList);
+				saveJson('followers-ids-partial', userInfo, idList);
 
-				console.log(chalk.green(`Number of Followers (IDs) (partial): ${idList.length}`));
+				console.log(chalk.gray(`  Number of Followers (IDs) (partial): ${idList.length}`));
 			}
 
 			//------------ finally
-			console.log(chalk.blue(`Number of Followers (IDs): ${idList.length}`));
-			console.log('*************');
+			console.log(chalk.cyan(`Number of Followers (IDs): ${idList.length}`));
 
 			//save list as json
-			saveJson('followers-ids', idList);
+			saveJson('followers-ids', userInfo, idList);
 
 			//remove partial
-			removePartialResultsFile('followers-ids-partial');
+			removePartialResultsFile(userInfo, 'followers-ids-partial');
 
 			//resolve
 			resolve(idList);
-
 
 		});
 
@@ -156,7 +170,7 @@ async function getFollowersIDsByName(screen_name) {
 		const endpoint = '/followers/ids';
 
 		return new Promise(
-			async (resolve, reject) => {
+			async (resolve) => {
 
 				//check locally stored limit (wait for new window if needed)
 				await checkLimit(familyResource, endpoint);
@@ -166,15 +180,11 @@ async function getFollowersIDsByName(screen_name) {
 				rateLimits[familyResource][endpoint].remaining--;
 
 				//Call Twitter API
-				client.get(endpoint, params)
-					.then(function (res) {
-						resolve(res);
-					})
-					.catch(function (err) {
-						console.log(err);
-						reject(err);
-						throw err;
-					});
+				// console.log(params);
+				const results = await twitter.get(endpoint, params);
+
+				// console.log(results.data);
+				resolve(results);
 
 			});
 
@@ -182,12 +192,13 @@ async function getFollowersIDsByName(screen_name) {
 
 }
 
+
 //----------------------------------
 
 
-async function getUsersInfoByID(idList) {
+async function getUsersInfoByID(userInfo,idList) {
 
-	console.log(chalk.blue(`Get ${screen_name}'s Followers Info`));
+	console.log(chalk.blue(`Get ${userInfo.screen_name}'s Followers Info`));
 
 	// create batches of 100
 	idList = _.chunk(idList, 100);
@@ -200,24 +211,25 @@ async function getUsersInfoByID(idList) {
 
 			for (let L of idList) {
 				const res = await getUsers(L);
-				userlist = _.concat(userlist, res);
+				userlist = _.concat(userlist, res.data);
 				userlist = _.flattenDeep(userlist);
 
 				//save partial list
-				saveJson('followers-info-partial', userlist);
+				saveJson('followers-partial', userInfo, userlist);
 
-				console.log(chalk.green(`Followers Info (partial): ${userlist.length}`));
+				console.log(chalk.gray(`  Followers Info (partial): ${userlist.length}`));
 			}
 
 			//------------ finally
-			console.log(chalk.blue(`Number of Followers Info: ${userlist.length}`));
+			console.log(chalk.cyan(`Number of Followers: ${userlist.length}`));
 			console.log('----------------');
 
 			//save list as json
-			saveJson('followers-info', userlist);
+			// saveJson('followers-info', userInfo, userlist);
 
-			//remove partial
-			removePartialResultsFile('followers-info-partial');
+			//remove partial info and list of ids
+			removePartialResultsFile(userInfo, 'followers-partial');
+			removePartialResultsFile(userInfo, 'followers-ids');
 
 			//resolve
 			resolve(userlist);
@@ -237,7 +249,7 @@ async function getUsersInfoByID(idList) {
 		const familyResource = 'users';
 
 		return new Promise(
-			async (resolve, reject) => {
+			async (resolve) => {
 
 				//check locally stored limit (wait for new window if needed)
 				await checkLimit(familyResource, endpoint);
@@ -245,18 +257,12 @@ async function getUsersInfoByID(idList) {
 				//decrease remaining calls available
 				// console.log('current limit: ', rateLimits[familyResource][endpoint].remaining);	
 				rateLimits[familyResource][endpoint].remaining--;
-
+				
 				//Call Twitter API
-				client.post(endpoint, requestParams)
-					.then(res => {
-						resolve(res);
-					})
-					.catch(function (err) {
-						console.log(err);
-						reject(err);
-						throw err;
+				const result = await twitter.post(endpoint, requestParams);
 
-					});
+				//continue
+				resolve(result);
 
 			});
 	}
@@ -270,7 +276,7 @@ async function checkLimit(familyResource, endpoint) {
 	return new Promise(
 		async (resolve) => {
 
-			//number of calls remaining
+			//number of calls remaining\
 			const resourceremaining = rateLimits[familyResource][endpoint].remaining;
 			// console.log(rateLimits[familyResource][endpoint]);
 
@@ -304,10 +310,9 @@ function timer(reset) {
 		(resolve) => {
 
 			//transform time to reset into interval (duration)
-			let resetTime = luxon.DateTime.fromSeconds(reset);
-			let blockageInterval = luxon.Interval.fromDateTimes(now, resetTime);
-
-			// console.log(chalk.green(blockageInterval));
+			const now = luxon.DateTime.local();
+			const resetTime = luxon.DateTime.fromSeconds(reset);
+			const blockageInterval = luxon.Interval.fromDateTimes(now, resetTime);
 
 			// Timer
 			const timer = new Timer();
@@ -320,10 +325,12 @@ function timer(reset) {
 				});
 				log(chalk.yellow(tick.toFormat('m:ss')));
 			});
+
 			timer.on('done', () => {
 				//end timer
 				resolve('Timer ended');
 			});
+
 			// timer.on('statusChanged', (status) => console.log('status:', status));
 
 			//start timer
@@ -337,46 +344,44 @@ function timer(reset) {
 function getRateLimit(familyResource, endpoint) {
 
 	return new Promise(
-		(resolve, reject) => {
+		async (resolve) => {
 
 			const params = {
 				resources: familyResource
 			};
 
-			client.get('application/rate_limit_status', params)
-				.then(function (res) {
-					if (familyResource) {
-						rateLimits[familyResource][endpoint] = res.resources[familyResource][endpoint];
-					} else {
-						rateLimits = res.resources;
-					}
-					resolve(rateLimits);
-				})
-				.catch(function (err) {
-					console.log(err);
-					reject(err);
-					throw err;
-				});
+			const rateLimitsStatus = await twitter.get('application/rate_limit_status', params);
 
+			if (familyResource) {
+				rateLimits[familyResource][endpoint] = rateLimitsStatus.data.resources[familyResource][endpoint];
+			} else {
+				rateLimits = rateLimitsStatus.data.resources;
+			}
+
+			resolve(rateLimits);
+				
 		});
-
 }
 
-function saveJson(feature, data) {
+//----------------------------------
+
+function saveJson(feature, userInfo, data) {
 
 	return new Promise(
-		(resolve, reject) => {
+		async (resolve) => {
 
+			const now = luxon.DateTime.local();
 			const folder = './results';
-			const fileName = `${screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
+			const fileName = `${userInfo.screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
 
 			if (!fs.existsSync(folder)) fs.mkdirSync(folder);
 
 			//payload
 			const dataset = {
-				title: screen_name,
-				date: now.toFormat('yyyy-LL-dd'),
-				data: data
+				userName: userInfo.screen_name,
+				date: now.toLocaleString(luxon.DateTime.DATETIME_FULL),
+				userInfo: userInfo,
+				followers: data
 			};
 
 			const jsonOptions = {
@@ -384,65 +389,18 @@ function saveJson(feature, data) {
 			};
 
 			//Save Json file
-
-			jsonfile.writeFile(`${folder}/${fileName}`, dataset, jsonOptions)
-				.then(res => {
-					// console.log(chalk.green('Json: Data written!'));
-					resolve(res);
-				})
-				.catch(err => {
-					console.error(err);
-					reject(err);
-				});
+			await jsonfile.writeFile(`${folder}/${fileName}`, dataset, jsonOptions);
+			
+			//continue
+			resolve();
 
 		});
 
 }
 
-function removePartialResultsFile(feature) {
+function removePartialResultsFile(user,feature) {
+	const now = luxon.DateTime.local();
 	const folder = './results';
-	const fileName = `${screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
+	const fileName = `${user.screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
 	fs.remove(`${folder}/${fileName}`);
 }
-
-
-
-
-
-// client.get('statuses/user_timeline', params, function (error, tweets, response) {
-//   console.log(error)
-//   if (!error) {
-//     console.log(tweets);
-//   }
-// });
-
-// client.get('statuses/user_timeline', params)
-// 	.then(function (res) {
-// 		console.log(res);
-// 	})
-// 	.catch(function (error) {
-// 		throw error;
-// 	})
-
-// var stream = client.stream('statuses/filter', {
-// 	track: 'javascript'
-// });
-
-// stream.on('data', function (event) {
-// 	console.log('-----')
-// 	// console.log(event && event.text);
-// 	console.log(event);
-// 	console.log('-----\n')
-
-// const isTweet = _.conforms({
-// contributors: _.isObject,
-// id_str: _.isString,
-// text: _.isString,
-// })
-// });
-
-// stream.on('error', function (error) {
-// 	throw error;
-// });
-
-//get JSON
