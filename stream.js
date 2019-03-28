@@ -4,7 +4,7 @@ const readlineAsync = require('readline-async');
 const TwitterStreamChannels = require('twitter-stream-channels');
 
 const Mongo = require('./mongo.js');
-const twitterCredentials = require('./twitter.credentials.json');
+const twitterCredentials = require('./credentials/twitter.credentials.json');
 const streamWatchList = require('./config.stream.json');
 
 

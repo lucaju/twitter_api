@@ -9,7 +9,7 @@ const luxon = require('luxon');
 const Timer = require('tiny-timer');
 const Twitter = require('twit');
 
-const twitterCredentials = require('./twitter.credentials.json');
+const twitterCredentials = require('./credentials/twitter.credentials.json');
 const screen_names = require('./config.followers.json');
 
 

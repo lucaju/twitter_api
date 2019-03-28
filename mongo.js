@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 const MongoClient = require('mongodb').MongoClient;
-const MongoConfig = require ('./mongo.config.json');
+const MongoConfig = require ('./credentials/mongo.config.json');
 
 //Mongo DB
 
