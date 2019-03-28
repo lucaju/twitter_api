@@ -1,14 +1,13 @@
 # folders
 /results
 
-mongo.config.json
-twitter.credentials.json
-
-
 # files
 package-lock.json
 .DS_Store
 *.sh
+
+mongo.config.json
+twitter.credentials.json
 
 # Logs
 logs
