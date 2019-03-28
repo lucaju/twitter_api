@@ -1,5 +1,6 @@
 const chalk = require('chalk');
 const figures = require('figures');
+const luxon = require('luxon');
 const readlineAsync = require('readline-async');
 const TwitterStreamChannels = require('twitter-stream-channels');
 
@@ -32,8 +33,7 @@ function openStream() {
 		}
 	}
 
-	console.log('\n');
-
+	console.log(chalk.white('Type "close" to exit.\n'));
 
 	// Start stream
 	stream = twitter.streamChannels({
@@ -49,8 +49,15 @@ function openStream() {
 
 	stream.on('channels/web', async function (tweet) {
 		tweet = postProcessing(tweet);
+		const now = luxon.DateTime.local();
 		const result = await Mongo.insertOne('twitter-stream', tweet);
-		console.log(chalk.blue('web:'), chalk.green(`${tweet.keywords}`), chalk.grey(`${result.insertedCount} item inserted`), figures.tick);
+		console.log(
+			chalk.white(`[${now.toLocaleString(luxon.DateTime.DATETIME_MED)}]`),
+			chalk.blue('web:'),
+			chalk.green(`${tweet.keywords}`),
+			chalk.grey(`${result.insertedCount} item inserted`),
+			figures.tick
+		);
 	});
 
 	//post-procesing to remove $ (to save at Mongo DB)
