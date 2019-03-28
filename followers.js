@@ -12,6 +12,7 @@ const Twitter = require('twit');
 const twitterCredentials = require('./twitter.credentials.json');
 const screen_names = require('./config.followers.json');
 
+
 //----------Init
 
 const twitter = new Twitter(twitterCredentials);

@@ -30,8 +30,11 @@ const MongoAPI = function MongoAPI() {
 
 				console.log(chalk.blue(`${result.ops.length} items inserted`));
 				client.close();
+
+				// console.log(result.insertedCount);
+				// console.log(result);
 				
-				resolve(result.ops);
+				resolve(result.insertedIds);
 					
 			});
 
@@ -47,10 +50,14 @@ const MongoAPI = function MongoAPI() {
 				const mongoCollection = client.db(dbName).collection(collection);
 				const result = await mongoCollection.insertOne(item);
 
-				console.log(chalk.blue('1 item inserted'));
+				// console.log(chalk.blue('1 item inserted'));
 				client.close();
+
+				// console.log(result.insertedCount);
+				// console.log(result.insertedId);
+				// console.log(result);
 				
-				resolve(result.ops);
+				resolve(result);
 					
 			});
 	};
@@ -70,28 +77,8 @@ const MongoAPI = function MongoAPI() {
 					
 			});
 
-		// (resolve) => {
-		// 	mongoConnect()
-		// 		.then(client => {
-
-		// 			const mongoCollection = client.db(dbName).collection(collection);
-
-		// 			mongoCollection.find(query).toArray()
-		// 				.then(result => {
-		// 					// console.log(result);
-		// 					client.close();
-		// 					resolve(result);
-		// 				})
-		// 				.catch(err => {
-		// 					console.log(chalk.red(err));
-		// 				});
-
-		// 		}).catch(err => {
-		// 			console.log(chalk.red(err));
-		// 		});
-		// });
 	};
 
-}
+};
 
 module.exports = new MongoAPI;
