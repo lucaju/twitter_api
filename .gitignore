@@ -1,8 +1,9 @@
 # folders
 /results
 
-twitter.credentials.json
 mongo.config.json
+twitter.credentials.json
+
 
 # files
 package-lock.json
