@@ -8,6 +8,8 @@ const twitterCredentials = require('./twitter.credentials.json');
 const streamWatchList = require('./config.stream.json');
 
 
+process.title = 'Node Twitter Stream';
+
 //----------Init
 
 const twitter = new TwitterStreamChannels(twitterCredentials);
