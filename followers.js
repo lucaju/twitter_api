@@ -59,7 +59,7 @@ if (argv.users) {
 
 async function start() {
 
-	console.log(chalk.magenta('Start'));
+	console.log(chalk.keyword('orange')('Start'));
 	
 	//get rate limits()
 	await getRateLimit();
@@ -72,7 +72,7 @@ async function start() {
 		await saveJson('followers', userAcountInfo, followersList);
 	}
 
-	console.log(chalk.magenta('End'));
+	console.log(chalk.keyword('orange')('End'));
 }
 
 

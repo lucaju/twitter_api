@@ -8,7 +8,7 @@ const MongoAPI = function MongoAPI() {
 
 	const useRemoteMongoDB = false; //false
 	const mongoURI = (useRemoteMongoDB == false) ? MongoConfig.localServerURI : MongoConfig.remoteServerURI;
-	const dbName =  MongoConfig.database;
+	const dbDefault =  MongoConfig.database;
 
 	const mongoConnect = function mongoConnect() {
 		return new Promise(
@@ -25,7 +25,7 @@ const MongoAPI = function MongoAPI() {
 
 				const client = await mongoConnect();
 					
-				const mongoCollection = client.db(dbName).collection(collection);
+				const mongoCollection = client.db(dbDefault).collection(collection);
 				const result = await mongoCollection.insertMany(data);
 
 				console.log(chalk.blue(`${result.ops.length} items inserted`));
@@ -40,14 +40,16 @@ const MongoAPI = function MongoAPI() {
 
 	};
 
-	this.insertOne = function insertOne(collection,item) {
+	this.insertOne = function insertOne(item,collection,db) {
+
+		let targetDB = (db) ? db : dbDefault;
 		
 		return new Promise(
 			async (resolve) => {
 
 				const client = await mongoConnect();
 					
-				const mongoCollection = client.db(dbName).collection(collection);
+				const mongoCollection = client.db(targetDB).collection(collection);
 				const result = await mongoCollection.insertOne(item);
 
 				// console.log(chalk.blue('1 item inserted'));
@@ -69,7 +71,7 @@ const MongoAPI = function MongoAPI() {
 
 				const client = await mongoConnect();
 					
-				const mongoCollection = client.db(dbName).collection(collection);
+				const mongoCollection = client.db(dbDefault).collection(collection);
 				const result = await mongoCollection.find(query).toArray();
 
 				client.close();

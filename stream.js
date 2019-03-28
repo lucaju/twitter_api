@@ -42,26 +42,33 @@ function openStream() {
 
 	//Process each channel in separate listeners like these.
 
-	stream.on('channels/napoli-movements', function (tweet) {
-		tweet = postProcessing(tweet);
-		Mongo.insertOne('twitter-stream', tweet);
+	stream.on('channels/napoli-social-movements', function (tweet) {
+		processTweet(tweet, 'napoli-social-movements');
 	});
 
-	stream.on('channels/web', async function (tweet) {
-		tweet = postProcessing(tweet);
+	stream.on('channels/web', function (tweet) {
+		processTweet(tweet, 'web');
+	});
+
+	async function processTweet(tweet, ch) {
+
+		tweet = fixAttributes(tweet);
 		const now = luxon.DateTime.local();
-		const result = await Mongo.insertOne('twitter-stream', tweet);
+
+		const result = await Mongo.insertOne(tweet,'twitter-stream', ch);
+
 		console.log(
-			chalk.white(`[${now.toLocaleString(luxon.DateTime.DATETIME_MED)}]`),
-			chalk.blue('web:'),
+			chalk.grey(`[${now.toLocaleString(luxon.DateTime.DATETIME_MED)}]`),
+			chalk.keyword('orange')(ch),
 			chalk.green(`${tweet.keywords}`),
 			chalk.grey(`${result.insertedCount} item inserted`),
 			figures.tick
 		);
-	});
+
+	}
 
 	//post-procesing to remove $ (to save at Mongo DB)
-	function postProcessing(tweet) {
+	function fixAttributes(tweet) {
 		tweet.keywords = tweet.$keywords;
 		delete tweet.$keywords;
 		delete tweet.$channels;
