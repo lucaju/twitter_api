@@ -2,6 +2,7 @@
 /results
 
 twitter.credentials.json
+mongo.config.json
 
 # files
 package-lock.json
