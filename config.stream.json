@@ -1,13 +1,51 @@
 {
-    "napoli-social-movements": [
-        "#climatestrike",
-        "#fridayforfuturenapoli",
-        "#indivisibili",
-        "#maiconsalvini",
+    "housing": [
+        "#bastalocazioniabusive",
+        "#dirittoallacittà",
+        "#fearless",
+        "#foriamolabolla",
+        "#handsoffourhomes",
         "#napoli",
-        "#senzapaura"
+        "#nopianocasa",
+        "#Mietenwahnsinn",
+        "#ripubblicizzaregliappartamenti",
+        "#SantaFedeLiberata",
+        "#senzapaura",
+        "#stopcasevacanze",
+        "#stopsfratti",
+        "#turistificazione",
+        "Affitti",
+        "bolla affitti",
+        "Case vacanze",
+        "cittadino della tua cittá",
+        "diritto alla casa",
+        "locazioni abusive",
+        "Manifestazione",
+        "rete SET",
+        "Santa Fede Liberata",
+        "stop sfratti",
+        "Sfratto / sfratti",
+        "turistificazione"
     ],
-    "web": [
-        "javascript"
+    "environment": [
+        "#cambiamenticlimatici",
+        "#fridayforfuturenapoli",
+        "#FridayForFuture",
+        "#Napoli",
+        "#StopBiocido"
+    ],
+    "feminism": [
+        "#ciaccailpatriarcato",
+        "#cittatransfemminista",
+        "#napoli",
+        "#nonunadimenonapoli",
+        "#nopillon",
+        "#terroneagitate",
+        "#verona"
+    ],
+    "other": [
+       "#indivisibili",
+       "#maiconsalvini",
+       "#vendinapolipoimuori"
     ]
 }
