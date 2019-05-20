@@ -4,7 +4,7 @@ const luxon = require('luxon');
 const readlineAsync = require('readline-async');
 const TwitterStreamChannels = require('twitter-stream-channels');
 
-const Mongo = require('./mongo.js');
+const mongo = require('./mongo.js');
 const twitterCredentials = require('./credentials/twitter.credentials.json');
 const streamWatchList = require('./config.stream.json');
 
@@ -61,7 +61,7 @@ function openStream() {
 		tweet = fixAttributes(tweet);
 		const now = luxon.DateTime.local();
 
-		await Mongo.insertOne(tweet,`twitter-stream-${ch}`, 'napoli-social-movements');
+		await mongo.insertOne(tweet,`twitter-stream-${ch}`, 'napoli-social-movements');
 
 		let hastags = [];
 		for (const tag of tweet.entities.hashtags) {
