@@ -1,46 +1,128 @@
 # Twitter API
 
-Script that use Twitter API to get users followers
+A framework to collect Twitter data using the official Twitter API.
 
-## How to use
+- [**Stream**](#Stream) of public tweets
+- User’s [**followers**](#Followers)
+  
+## Dependencies
 
-### 1. Node.js and NPM
+### Node.JS and NPM
 
-Make sure you have the latest version of Node.js installed on you machine.
-You can download Node.js here: [NodeJS](https://nodejs.org)
-Node.js comes with NPM
+Make sure you have the latest version of Node.js installed on your machine. You can download Node.js here: [NodeJS](https://nodejs.org/).
+*Note: Node.js comes with NPM*
 
-### 2. Clone or Download this project
+## Install
 
-### 3. Install project dependecies
+### Clone or Download this project
+
+### Install project dependencies
 
 - Open Terminal
 - Navigate to the folder you saved this project.
-- execute: `npm init`
+- execute: `npm install`
+- Rename the folder _config-sample_ to _config_
 
-### 4. Run
+### Twitter Credentials
 
-In the folder's project, run: `node index`
+To use this framework you need first to obtain a Twitter Developer Account: [https://developer.twitter.com/](https://developer.twitter.com/)
 
-### 5. Define the users you want to get the data from
+- Rename the folder _credentials-sample_ to _credentials_
+- Edit _twitter.credentials.json_ with your credentials from your Twitter Account
 
-There are 3 ways to do this.
+e.g.:
 
-#### a. config file
+```json
+{
+    "consumer_key": "your_consumer_key",
+    "consumer_secret": "your_consumer_secret",
+    "access_token": "your_access_token",
+    "access_token_secret": "your_access_token_secret"
+}
+```
 
-Use the file the screen_names.json to set a list of users.
-e.g ["user1","user2"]
+## Stream
 
-#### b. Inline command
+### Dependencies
 
-You can override the config file passing the users names directly
-e.g `node followers --users=user1,user2`
+#### MongoDB
 
-#### c. Runtime
+Tweets collected with the stream connector are directly saved into a MongoDB database.
 
-If the config file is empty and no names is passed for executuon, the app will ask you to set a Twitter screen_name to collect their followers
-e.g user1,user2
+Install and run locally: [https://www.mongodb.com/download-center/community](https://www.mongodb.com/download-center/community)
+Or set up a remote server, like [https://www.mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
 
-### 6. Results
+As a way to manage MongoDB, I suggest using MongoDB Compass: [https://www.mongodb.com/download-center](https://www.mongodb.com/download-center)
 
-Results are saved on the folder results.
+#### MongoDB config
+
+Edit _mongo.config.json_
+
+- Indicate if you are usually a local or remote server.
+- Put the URI for the local and remote server
+- Choose a name for the database
+
+e.g.:
+
+```json
+{
+    "useLocalDB": true,
+    "localServer": "mongodb://127.0.0.1:27017",
+    "remoteServer": "your_remote_server",
+    "database": "your_collection"
+}
+```
+
+### Define hashtags to follow
+
+- Edit _config.stream.json:_
+- Add a list of hashtags or keywords to track.
+- Separate the hashtags into different channels (collections).
+
+e.g.:
+
+```json
+{
+    "channel1": [
+        "#hastag1",
+        "#hastag2",
+        "any_keyworkd"
+    ],
+    "channel2": [
+        "#hastag3"
+    ]
+}
+```
+
+*Note: Tweets from different channels are saved on separated collection in the database.*
+
+### Run
+
+In the folder's project, run: `node src/stream.js`
+
+## Followers
+
+### Define the users you want to get data from
+
+Edit _config.followers.json_ with a list of usernames.
+
+e.g.:
+
+```json
+    [
+      "username1",
+      "username2"
+    ]
+```
+
+### Run
+
+In the folder's project, run: `node src/followers.js`
+
+*Note: You can override the config file passing usernames directly.*
+
+e.g.: `node src/followers.js —users=username1,username2`
+
+### Results
+
+Results are saved in the folder *results*.
