@@ -2,10 +2,7 @@ const chalk = require('chalk');
 const MongoClient = require('mongodb').MongoClient;
 const MongoConfig = require('./credentials/mongo.config.json');
 
-
-const useRemoteMongoDB = false; //false
-const mongoURI = (useRemoteMongoDB == false) ? MongoConfig.localServerURI : MongoConfig.remoteServerURI;
-const dbDefault = MongoConfig.database;
+const mongoURI = (MongoConfig.useLocalDB == true) ? MongoConfig.localServer : MongoConfig.remoteServer;
 
 const connect = () => {
 	return new Promise(
@@ -24,7 +21,7 @@ const insertMany = (collection, data) => {
 
 			const client = await connect();
 
-			const mongoCollection = client.db(dbDefault).collection(collection);
+			const mongoCollection = client.db(MongoConfig.database).collection(collection);
 			const result = await mongoCollection.insertMany(data);
 
 			console.log(chalk.blue(`${result.ops.length} items inserted`));
@@ -41,7 +38,7 @@ const insertMany = (collection, data) => {
 
 const insertOne = (item, collection, db) => {
 
-	let targetDB = (db) ? db : dbDefault;
+	let targetDB = (db) ? db : MongoConfig.database;
 
 	return new Promise(
 		async (resolve) => {
@@ -70,7 +67,7 @@ const find = (collection, query) => {
 
 			const client = await connect();
 
-			const mongoCollection = client.db(dbDefault).collection(collection);
+			const mongoCollection = client.db(MongoConfig.database).collection(collection);
 			const result = await mongoCollection.find(query).toArray();
 
 			client.close();

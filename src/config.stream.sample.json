@@ -1,0 +1,10 @@
+{
+    "channel1": [
+        "#hastag1",
+        "#hastag2",
+        "any_keyworkd"
+    ],
+    "channel2": [
+        "#hastag3"
+    ]
+}
