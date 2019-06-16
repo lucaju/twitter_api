@@ -10,7 +10,7 @@ const Timer = require('tiny-timer');
 const Twitter = require('twit');
 
 const twitterCredentials = require('./credentials/twitter.credentials.json');
-const screen_names = require('./config.followers.json');
+const screen_names = require('./config/config.followers.json');
 
 
 //----------Init

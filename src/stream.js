@@ -4,9 +4,9 @@ const luxon = require('luxon');
 const readlineAsync = require('readline-async');
 const TwitterStreamChannels = require('twitter-stream-channels');
 
-const mongo = require('./mongo.js');
+const mongo = require('./mongo/mongo.js');
 const twitterCredentials = require('./credentials/twitter.credentials.json');
-const streamWatchList = require('./config.stream.json');
+const streamWatchList = require('./config/config.stream.json');
 
 
 process.title = 'Node Twitter Stream';

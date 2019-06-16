@@ -2,10 +2,8 @@
 /results
 
 #config files
-/src/credentials/mongo.config.json
-/src/credentials/twitter.credentials.json
-/src/config.followers.json
-/src/config.stream.json
+src/credentials/
+src/config/
 
 # files
 package-lock.json
