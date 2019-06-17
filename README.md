@@ -98,7 +98,7 @@ e.g.:
 
 ### Run
 
-In the folder's project, run: `node src/stream.js`
+In the folder's project, run: `node stream.js`
 
 ## Followers
 
@@ -117,11 +117,11 @@ e.g.:
 
 ### Run
 
-In the folder's project, run: `node src/followers.js`
+In the folder's project, run: `node followers.js`
 
 *Note: You can override the config file passing usernames directly.*
 
-e.g.: `node src/followers.js —users=username1,username2`
+e.g.: `node followers.js —users=username1,username2`
 
 ### Results
 
