@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 const MongoClient = require('mongodb').MongoClient;
-const MongoConfig = require('./credentials/mongo.config.json');
+const MongoConfig = require('../credentials/mongo.config.json');
 
 const mongoURI = (MongoConfig.useLocalDB == true) ? MongoConfig.localServer : MongoConfig.remoteServer;
 
