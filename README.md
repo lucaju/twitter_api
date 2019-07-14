@@ -37,20 +37,6 @@ twitter_access_token=your_access_token
 twitter_access_token_secret=your_access_token_secret
 ```
 
-<!-- - Rename the folder _credentials-sample_ to _credentials_
-- Edit _twitter.credentials.json_ with your credentials from your Twitter Account
-
-e.g.:
-
-```json
-{
-    "consumer_key": "your_consumer_key",
-    "consumer_secret": "your_consumer_secret",
-    "access_token": "your_access_token",
-    "access_token_secret": "your_access_token_secret"
-}
-``` -->
-
 ## Stream
 
 ### Stream Dependencies
@@ -74,24 +60,7 @@ MONGODB_LOCAL_URL=mongodb://127.0.0.1:27017/your_database
 MONGODB_REMOTE_URL=your_remote_server/your_database
 ```
 
-_Note: Change useLocalDB to "false" to use your remote server_
-
-<!-- Edit _mongo.config.json_
-
-- Indicate if you are usually a local or remote server.
-- Put the URI for the local and remote server
-- Choose a name for the database
-
-e.g.:
-
-```json
-{
-    "useLocalDB": true,
-    "localServer": "mongodb://127.0.0.1:27017",
-    "remoteServer": "your_remote_server",
-    "database": "your_database"
-}
-``` -->
+##### Note: Change useLocalDB to "false" to use your remote server
 
 ### Define hashtags to follow
 
