@@ -1,8 +1,7 @@
 # folders
 /results
 
-#config files
-src/credentials/
+#config files\
 src/config/
 
 # files

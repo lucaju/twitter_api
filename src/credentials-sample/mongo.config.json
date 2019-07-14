@@ -1,6 +1,0 @@
-{
-    "useLocalDB": true,
-    "localServer": "mongodb://127.0.0.1:27017",
-    "remoteServer": "your_remote_server",
-    "database": "your_collection"
-}

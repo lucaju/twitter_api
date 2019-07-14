@@ -21,13 +21,23 @@ Make sure you have the latest version of Node.js installed on your machine. You 
 - Open Terminal
 - Navigate to the folder you saved this project.
 - execute: `npm install`
-- Rename the folder _config-sample_ to _config_
+- create a .env file to save your credentials
+<!-- - Rename the folder _config-sample_ to _config_ -->
 
 ### Twitter Credentials
 
 To use this framework you need first to obtain a Twitter Developer Account: [https://developer.twitter.com/](https://developer.twitter.com/)
 
-- Rename the folder _credentials-sample_ to _credentials_
+On your .env file add the following:
+
+```env
+twitter_consumer_key=your_consumer_key
+twitter_consumer_secret=your_consumer_secret
+twitter_access_token=your_access_token
+twitter_access_token_secret=your_access_token_secret
+```
+
+<!-- - Rename the folder _credentials-sample_ to _credentials_
 - Edit _twitter.credentials.json_ with your credentials from your Twitter Account
 
 e.g.:
@@ -39,11 +49,11 @@ e.g.:
     "access_token": "your_access_token",
     "access_token_secret": "your_access_token_secret"
 }
-```
+``` -->
 
 ## Stream
 
-### Dependencies
+### Stream Dependencies
 
 #### MongoDB
 
@@ -56,7 +66,17 @@ As a way to manage MongoDB, I suggest using MongoDB Compass: [https://www.mongod
 
 #### MongoDB config
 
-Edit _mongo.config.json_
+On your .env file add the following:
+
+```env
+useLocalDB=true
+MONGODB_LOCAL_URL=mongodb://127.0.0.1:27017/your_database
+MONGODB_REMOTE_URL=your_remote_server/your_database
+```
+
+_Note: Change useLocalDB to "false" to use your remote server_
+
+<!-- Edit _mongo.config.json_
 
 - Indicate if you are usually a local or remote server.
 - Put the URI for the local and remote server
@@ -69,9 +89,9 @@ e.g.:
     "useLocalDB": true,
     "localServer": "mongodb://127.0.0.1:27017",
     "remoteServer": "your_remote_server",
-    "database": "your_collection"
+    "database": "your_database"
 }
-```
+``` -->
 
 ### Define hashtags to follow
 
@@ -96,9 +116,9 @@ e.g.:
 
 *Note: Tweets from different channels are saved on separated collection in the database.*
 
-### Run
+### Run Stream
 
-In the folder's project, run: `node stream.js`
+In the folder's project, run: `env-cmd node stream.js`
 
 ## Followers
 
@@ -115,13 +135,13 @@ e.g.:
     ]
 ```
 
-### Run
+### Run Followers
 
 In the folder's project, run: `node followers.js`
 
 *Note: You can override the config file passing usernames directly.*
 
-e.g.: `node followers.js —users=username1,username2`
+e.g.: `env-cmd node followers.js —users=username1,username2`
 
 ### Results
 
