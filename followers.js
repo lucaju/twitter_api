@@ -1,4 +1,7 @@
-const _ = require('lodash');
+// const _ = require('lodash');
+const chunk = require ('lodash/chunk');
+const concat = require ('lodash/concat');
+const flattenDeep = require ('lodash/flattenDeep');
 const argv = require('minimist')(process.argv.slice(2));
 const chalk = require('chalk');
 const fs = require('fs-extra');
@@ -141,7 +144,7 @@ async function getFollowersIDsByName(userInfo) {
 
 				//save cursor and data
 				requestParams.cursor = res.data.next_cursor_str;
-				idList = _.concat(idList, res.data.ids);
+				idList = concat(idList, res.data.ids);
 
 				//save partial list
 				saveJson('followers-ids-partial', userInfo, idList);
@@ -202,7 +205,7 @@ async function getUsersInfoByID(userInfo,idList) {
 	console.log(chalk.blue(`Get ${userInfo.screen_name}'s Followers Info`));
 
 	// create batches of 100
-	idList = _.chunk(idList, 100);
+	idList = chunk(idList, 100);
 
 	//store users info
 	let userlist = [];
@@ -212,8 +215,8 @@ async function getUsersInfoByID(userInfo,idList) {
 
 			for (let L of idList) {
 				const res = await getUsers(L);
-				userlist = _.concat(userlist, res.data);
-				userlist = _.flattenDeep(userlist);
+				userlist = concat(userlist, res.data);
+				userlist = flattenDeep(userlist);
 
 				//save partial list
 				saveJson('followers-partial', userInfo, userlist);
