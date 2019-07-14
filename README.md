@@ -28,7 +28,7 @@ Make sure you have the latest version of Node.js installed on your machine. You 
 
 To use this framework you need first to obtain a Twitter Developer Account: [https://developer.twitter.com/](https://developer.twitter.com/)
 
-On your .env file add the following:
+On your *.env* file add the following:
 
 ```env
 twitter_consumer_key=your_consumer_key
@@ -66,7 +66,7 @@ As a way to manage MongoDB, I suggest using MongoDB Compass: [https://www.mongod
 
 #### MongoDB config
 
-On your .env file add the following:
+On your *.env* file add the following:
 
 ```env
 useLocalDB=true
