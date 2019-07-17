@@ -37,7 +37,7 @@ twitter_access_token=your_access_token
 twitter_access_token_secret=your_access_token_secret
 ```
 
-#### MongoDB
+### MongoDB
 
 Tweets collected with the *Stream* connector are directly saved into a MongoDB database.
 Followers information collected through the *Followers* conenction can also be saved into a MongoDB database.
