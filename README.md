@@ -37,13 +37,10 @@ twitter_access_token=your_access_token
 twitter_access_token_secret=your_access_token_secret
 ```
 
-## Stream
-
-### Stream Dependencies
-
 #### MongoDB
 
-Tweets collected with the stream connector are directly saved into a MongoDB database.
+Tweets collected with the *Stream* connector are directly saved into a MongoDB database.
+Followers information collected through the *Followers* conenction can also be saved into a MongoDB database.
 
 Install and run locally: [https://www.mongodb.com/download-center/community](https://www.mongodb.com/download-center/community)
 Or set up a remote server, like [https://www.mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
@@ -61,6 +58,12 @@ MONGODB_REMOTE_URL=your_remote_server/your_database
 ```
 
 ##### Note: Change useLocalDB to "false" to use your remote server
+
+## Stream
+
+### Stream Dependencies
+
+- MongoDB (See above)
 
 ### Define hashtags to follow
 
@@ -88,6 +91,8 @@ e.g.:
 ### Run Stream
 
 In the folder's project, run: `env-cmd node stream.js`
+
+Tweets will be saved to your MongoDB.
 
 ## Followers
 
@@ -121,4 +126,4 @@ e.g.: `env-cmd node followers.js —-users=username1,username2`
 `--useJSON=true|false` Save results to JSON file (default: true)
 Results are saved in the folder *./results/followers*.
 
-`--useDB=true|false` Save result to a MongoDB. Must setup first. Chech isntruction above.
+`--useDB=true|false` Save result to a MongoDB. Must setup first. Check isntruction above.
