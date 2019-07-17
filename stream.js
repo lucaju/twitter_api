@@ -7,7 +7,7 @@ const ora = require('ora');
 const readlineAsync = require('readline-async');
 const TwitterStreamChannels = require('twitter-stream-channels');
 
-const mongoDB = require('./src/mongo/mongoDB');
+const mongoDB = require('./src/db/mongoDB');
 const tweetSchema = require('./src/schemas/tweet');
 
 const streamWatchList = require('./src/config/config.stream.json');
@@ -76,9 +76,14 @@ const processTweet = async (tweetData, channel) => {
 
 //post-procesing to remove $ (to save at Mongo DB)
 const fixAttributes = tweet => {
+	tweet.created_at = new Date(tweet.created_at);
+	tweet.user.created_at = new Date(tweet.user.created_at);
+
 	tweet.keywords = tweet.$keywords;
+
 	delete tweet.$keywords;
 	delete tweet.$channels;
+	
 	return tweet;
 };
 

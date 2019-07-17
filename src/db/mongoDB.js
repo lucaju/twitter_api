@@ -9,7 +9,8 @@ const connect = async () => {
 	try {
 		await mongoose.connect(mongoURI, {
 			useNewUrlParser: true,
-			useCreateIndex: true
+			useCreateIndex: true,
+			useFindAndModify: false
 		});
 		return true;
 
