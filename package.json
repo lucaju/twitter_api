@@ -19,6 +19,7 @@
 		"transform-date": "env-cmd node transform-date"
 	},
 	"dependencies": {
+		"argv": "0.0.2",
 		"chalk": "^2.4.2",
 		"cli-progress": "^2.1.1",
 		"dotenv": "^8.0.0",
@@ -29,7 +30,6 @@
 		"jsonfile": "^5.0.0",
 		"lodash": "^4.17.14",
 		"luxon": "^1.17.1",
-		"minimist": "^1.2.0",
 		"mongoose": "^5.6.4",
 		"ora": "^3.4.0",
 		"readline-async": "^0.1.0",

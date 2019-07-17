@@ -1,4 +1,8 @@
-[
-    "username1",
-    "username2"
-]
+{
+    "useJSON": true,
+    "useDB": true,
+    "users": [
+        "username1",
+        "username2"
+    ]
+}

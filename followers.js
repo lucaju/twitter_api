@@ -1,19 +1,22 @@
 require('dotenv').config();
-const chunk = require ('lodash/chunk');
-const concat = require ('lodash/concat');
-const flattenDeep = require ('lodash/flattenDeep');
-const argv = require('minimist')(process.argv.slice(2));
+const chunk = require('lodash/chunk');
+const concat = require('lodash/concat');
+const flattenDeep = require('lodash/flattenDeep');
 const chalk = require('chalk');
 const fs = require('fs-extra');
-const inquirer = require('inquirer');
 const jsonfile = require('jsonfile');
 const log = require('single-line-log').stdout;
 const luxon = require('luxon');
+const mongoose = require('mongoose');
 const Timer = require('tiny-timer');
 const Twitter = require('twit');
 
-// const twitterCredentials = require('./src/credentials/twitter.credentials.json');
-const screen_names = require('./src/config/config.followers.json');
+const {runtimeArgv} = require('./src/followers/runtime-argv');
+const {runtimeInquerer} = require('./src/followers/runtime-inquerer');
+
+const followersSchema = require('./src/schemas/followers');
+const mongoDB = require('./src/db/mongoDB');
+const config = require('./src/config/config.followers.json');
 
 
 //----------Init
@@ -26,60 +29,79 @@ const twitter = new Twitter({
 });
 
 let screen_name_collection = [];
+let useJSON = true;
+let useDB = false;
+
 let rateLimits = {};
+
 
 //----------------------------------
 
 //Initical Setup
-if (argv.users) {
+(async () => {
 
-	// Parser CLI variables
-	screen_name_collection = argv.users.split(',');
-	start();
+	if (runtimeArgv.users) {
 
-} else if (screen_names.length > 0) {
+		// Parse CLI variables
+		if (runtimeArgv.users[0] == '') return console.log(chalk.red('You must list at least one user!'));
 
-	// Get data from Json 
-	screen_name_collection = screen_names;
-	start();
+		screen_name_collection = runtimeArgv.users;
+		if(runtimeArgv.useJSON != undefined) useJSON = runtimeArgv.useJSON;
+		if(runtimeArgv.useDB != undefined) useDB = runtimeArgv.useDB;
 
-} else {
-	// ask - setup question in the beginning
-	inquirer
-		.prompt([
-			{
-				type: 'input',
-				name: 'users',
-				message: 'Type users\' screen name from who you want get a list of followers (separate users by comma[,]): '
-			},
-		])
-		.then(res => {
-			if (res.users.length > 0) {
-				screen_name_collection = res.users.split(',');
-				start();
-			}
-		});
+		start();
 
-}
+	} else if (config.users.length > 0) {
+
+		// Get data from Json 
+		screen_name_collection = config.users;
+		if(config.useJSON != undefined) useJSON = config.useJSON;
+		if(config.useDB != undefined) useDB = config.useDB;
+
+		start();
+
+	} else {
+
+		// ask - setup question in the beginning
+		const result = await runtimeInquerer();
+
+		screen_name_collection = result.users.split(',');
+		useJSON = result.useJSON;
+		useDB = result.useDB;
+
+		start();
+	
+	}
+})();
 
 
 //----------------------------------
 
 async function start() {
 
-	console.log(chalk.keyword('orange')('Start'));
-	
+	console.log(chalk.keyword('orange')('Start\n'));
+	console.log(`List of users: ${chalk.keyword('chocolate')(screen_name_collection)}\n`);
+
+	//get Twttter limits
 	await getRateLimit();
 
-	//get followers
-	for (const user of screen_name_collection) {
-		const userAcountInfo = await getUserInfo(user);
-		const IDs = await getFollowersIDsByName(userAcountInfo);
-		const followersList = await getUsersInfoByID(userAcountInfo,IDs);
-		await saveJson('followers', userAcountInfo, followersList);
+	// get followers
+	for (const username of screen_name_collection) {
+		const user = await getUserInfo(username);
+		const followersIDs = await getFollowersIDsByName(user);
+		const followersList = await getUsersInfoByID(user, followersIDs);
+
+		//user results
+		user.collected_at = new Date();
+		user.followers = followersList;
+
+		if (useJSON) await saveJson(user);
+		if (useDB) await saveToDB(user);
+
+		console.log('----------------\n');
 	}
 
-	console.log(chalk.keyword('orange')('End'));
+	console.log(chalk.keyword('orange')('\nEnd'));
 }
 
 
@@ -88,14 +110,16 @@ async function start() {
 
 const getUserInfo = async user => {
 
-	console.log(chalk.blue(`Get ${user}'s info`));
+	console.log(chalk.blue(`Fetching ${user}'s info\n`));
 
 	//set endpoint
 	const familyResource = 'users';
 	const endpoint = '/users/show';
 
 	//parameters
-	const params = { screen_name: user };
+	const params = {
+		screen_name: user
+	};
 
 	//check locally stored limit (wait for new window if needed)
 	await checkLimit(familyResource, `${endpoint}/:id`);
@@ -119,7 +143,7 @@ const getUserInfo = async user => {
 // get followers ID
 const getFollowersIDsByName = async userInfo => {
 
-	console.log(chalk.blue(`Get ${userInfo.screen_name}'s Followers (IDs)`));
+	console.log(chalk.blue(`Fetching ${userInfo.screen_name}'s Followers (IDs)`));
 
 	//set list to store all IDs
 	let idList = [];
@@ -143,21 +167,21 @@ const getFollowersIDsByName = async userInfo => {
 		idList = concat(idList, res.data.ids);
 
 		//save partial list
-		saveJson('followers-ids-partial', userInfo, idList);
+		// if (useJSON) saveJson('followers-ids-partial', userInfo, idList);
 
 		console.log(chalk.gray(`  Number of Followers (IDs) (partial): ${idList.length}`));
 	}
 
 	//------------ finally
-	console.log(chalk.cyan(`Number of Followers (IDs): ${idList.length}`));
+	console.log(chalk.cyan(`Number of Followers (IDs): ${idList.length}\n`));
 
 	//save list as json
-	saveJson('followers-ids', userInfo, idList);
+	// if (useJSON) saveJson('followers-ids', userInfo, idList);
 
 	//remove partial
-	removePartialResultsFile(userInfo, 'followers-ids-partial');
+	// if (useJSON) removePartialResultsFile(userInfo, 'followers-ids-partial');
 
-	//resolve
+	//return
 	return idList;
 
 };
@@ -188,9 +212,9 @@ const getFollowers = async params => {
 //----------------------------------
 
 
-const getUsersInfoByID = async (userInfo,idList) => {
+const getUsersInfoByID = async (userInfo, idList) => {
 
-	console.log(chalk.blue(`Get ${userInfo.screen_name}'s Followers Info`));
+	console.log(chalk.blue(`Fetching ${userInfo.screen_name}'s Followers Info`));
 
 	// create batches of 100
 	idList = chunk(idList, 100);
@@ -204,21 +228,21 @@ const getUsersInfoByID = async (userInfo,idList) => {
 		userlist = flattenDeep(userlist);
 
 		//save partial list
-		saveJson('followers-partial', userInfo, userlist);
+		// if (useJSON) saveJson('followers-partial', userInfo, userlist);
 
 		console.log(chalk.gray(`  Followers Info (partial): ${userlist.length}`));
 	}
 
 	//------------ finally
-	console.log(chalk.cyan(`Number of Followers: ${userlist.length}`));
-	console.log('----------------');
+	console.log(chalk.cyan(`Number of Followers: ${userlist.length}\n`));
+	
 
 	//save list as json
 	// saveJson('followers-info', userInfo, userlist);
 
 	//remove partial info and list of ids
-	removePartialResultsFile(userInfo, 'followers-partial');
-	removePartialResultsFile(userInfo, 'followers-ids');
+	// if (useJSON) removePartialResultsFile(userInfo, 'followers-partial');
+	// if (useJSON) removePartialResultsFile(userInfo, 'followers-ids');
 
 	//resolve
 	return userlist;
@@ -243,7 +267,7 @@ const getUsers = async params => {
 	//decrease remaining calls available
 	// console.log('current limit: ', rateLimits[familyResource][endpoint].remaining);	
 	rateLimits[familyResource][endpoint].remaining--;
-	
+
 	//Call Twitter API
 	const result = await twitter.post(endpoint, requestParams);
 
@@ -262,7 +286,7 @@ const checkLimit = async (familyResource, endpoint) => {
 	//continue if there is resource available
 	if (resourceremaining > 0) return true;
 
-		
+
 	//wait next window
 	console.log(chalk.dim('------------\n You have reached the rate limit of this endpoint. Waiting for the next window. Do not close the app!'));
 
@@ -310,10 +334,9 @@ const timer = reset => {
 
 //----------------------------------
 
-async function getRateLimit (familyResource, endpoint) {
+async function getRateLimit(familyResource, endpoint) {
 
 	const params = { resources: familyResource };
-
 	const rateLimitsStatus = await twitter.get('application/rate_limit_status', params);
 
 	if (familyResource) {
@@ -323,39 +346,59 @@ async function getRateLimit (familyResource, endpoint) {
 	}
 
 	return rateLimits;
-				
+
 }
 
 //----------------------------------
 
-const saveJson = async (feature, userInfo, data) => {
+const saveJson = async user => {
 
 	const now = luxon.DateTime.local();
-	const folder = './results';
-	const fileName = `${userInfo.screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
+	const folder = './results/followers';
+	const fileName = `${user.screen_name}-${now.toFormat('yyyy-LL-dd')}.json`;
 
 	if (!fs.existsSync(folder)) fs.mkdirSync(folder);
 
-	//payload
-	const dataset = {
-		userName: userInfo.screen_name,
-		date: now.toLocaleString(luxon.DateTime.DATETIME_FULL),
-		userInfo: userInfo,
-		followers: data
-	};
-
-	const jsonOptions = {
-		spaces: 4
-	};
+	const jsonOptions = { spaces: 4 };
 
 	//Save Json file
-	await jsonfile.writeFile(`${folder}/${fileName}`, dataset, jsonOptions);
+	await jsonfile.writeFile(`${folder}/${fileName}`, user, jsonOptions);
+
+	console.log (chalk.green(`JSON file saved at ${folder}`));
 
 };
 
-const removePartialResultsFile = (user,feature) => {
-	const now = luxon.DateTime.local();
-	const folder = './results';
-	const fileName = `${user.screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
-	fs.remove(`${folder}/${fileName}`);
+// const removePartialResultsFile = (user, feature) => {
+// 	const now = luxon.DateTime.local();
+// 	const folder = './results/followers';
+// 	const fileName = `${user.screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
+// 	fs.remove(`${folder}/${fileName}`);
+// };
+
+//----------------------------------
+
+const saveToDB = async user => {
+
+	//date
+	user.followers = convertDate(user.followers);
+
+	//Start DB
+	await mongoDB.connect();
+
+	//schema - model
+	const FollowersModel = mongoose.model('twitter-user-followers', followersSchema);
+	const userModel = new FollowersModel(user);
+
+	//save
+	await userModel.save();
+
+	mongoDB.close();
+
+	console.log (chalk.green('User saved to MongoDB'));
+
+};
+
+const convertDate = followers => {
+	followers.forEach(user => user.created_at = new Date(user.created_at) );
+	return followers;
 };

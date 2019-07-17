@@ -22,7 +22,7 @@ Make sure you have the latest version of Node.js installed on your machine. You 
 - Navigate to the folder you saved this project.
 - execute: `npm install`
 - create a .env file to save your credentials
-<!-- - Rename the folder _config-sample_ to _config_ -->
+- Rename the folder _config-sample_ to _config_
 
 ### Twitter Credentials
 
@@ -98,20 +98,27 @@ Edit _config.followers.json_ with a list of usernames.
 e.g.:
 
 ```json
-    [
-      "username1",
-      "username2"
-    ]
+    {
+        "useJSON": true, [true|false]
+        "useDB": false, [true|false]
+        "users": [
+            "username1",
+            "username2"
+        ]
+    }
 ```
 
 ### Run Followers
 
-In the folder's project, run: `node followers.js`
+In the folder's project, run: `node env-cmd node followers.js`
 
 *Note: You can override the config file passing usernames directly.*
 
-e.g.: `env-cmd node followers.js —users=username1,username2`
+e.g.: `env-cmd node followers.js —-users=username1,username2`
 
 ### Results
 
-Results are saved in the folder *results*.
+`--useJSON=true|false` Save results to JSON file (default: true)
+Results are saved in the folder *./results/followers*.
+
+`--useDB=true|false` Save result to a MongoDB. Must setup first. Chech isntruction above.
