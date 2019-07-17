@@ -1,6 +1,6 @@
 {
     "useJSON": true,
-    "useDB": true,
+    "useDB": false,
     "users": [
         "username1",
         "username2"
