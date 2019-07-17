@@ -1,6 +1,6 @@
 {
 	"name": "twitter_api",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Tools for collect Twitter data",
 	"keywords": [
 		"Twitter"
@@ -15,8 +15,7 @@
 	"scripts": {
 		"followers": "env-cmd node followers",
 		"stream": "env-cmd node stream",
-		"find": "env-cmd node find",
-		"transform-date": "env-cmd node transform-date"
+		"find": "env-cmd node find"
 	},
 	"dependencies": {
 		"argv": "0.0.2",
@@ -30,7 +29,7 @@
 		"jsonfile": "^5.0.0",
 		"lodash": "^4.17.14",
 		"luxon": "^1.17.1",
-		"mongoose": "^5.6.4",
+		"mongoose": "^5.6.5",
 		"ora": "^3.4.0",
 		"readline-async": "^0.1.0",
 		"single-line-log": "^1.1.2",

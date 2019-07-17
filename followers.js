@@ -1,8 +1,8 @@
 require('dotenv').config();
+const chalk = require('chalk');
 const chunk = require('lodash/chunk');
 const concat = require('lodash/concat');
 const flattenDeep = require('lodash/flattenDeep');
-const chalk = require('chalk');
 const fs = require('fs-extra');
 const jsonfile = require('jsonfile');
 const log = require('single-line-log').stdout;
@@ -16,8 +16,8 @@ const {runtimeInquerer} = require('./src/followers/runtime-inquerer');
 
 const followersSchema = require('./src/schemas/followers');
 const mongoDB = require('./src/db/mongoDB');
-const config = require('./src/config/config.followers.json');
 
+const config = require('./src/config/config.followers.json');
 
 //----------Init
 
@@ -28,10 +28,9 @@ const twitter = new Twitter({
 	access_token_secret: process.env.twitter_access_token_secret
 });
 
-let screen_name_collection = [];
+
 let useJSON = true;
 let useDB = false;
-
 let rateLimits = {};
 
 
@@ -40,36 +39,38 @@ let rateLimits = {};
 //Initical Setup
 (async () => {
 
+	let userNames;
+
 	if (runtimeArgv.users) {
 
 		// Parse CLI variables
 		if (runtimeArgv.users[0] == '') return console.log(chalk.red('You must list at least one user!'));
 
-		screen_name_collection = runtimeArgv.users;
+		userNames = runtimeArgv.users;
 		if(runtimeArgv.useJSON != undefined) useJSON = runtimeArgv.useJSON;
 		if(runtimeArgv.useDB != undefined) useDB = runtimeArgv.useDB;
 
-		start();
+		start(userNames);
 
 	} else if (config.users.length > 0) {
 
 		// Get data from Json 
-		screen_name_collection = config.users;
+		userNames = config.users;
 		if(config.useJSON != undefined) useJSON = config.useJSON;
 		if(config.useDB != undefined) useDB = config.useDB;
 
-		start();
+		start(userNames);
 
 	} else {
 
 		// ask - setup question in the beginning
 		const result = await runtimeInquerer();
 
-		screen_name_collection = result.users.split(',');
+		userNames = result.users.split(',');
 		useJSON = result.useJSON;
 		useDB = result.useDB;
 
-		start();
+		start(userNames);
 	
 	}
 })();
@@ -77,16 +78,16 @@ let rateLimits = {};
 
 //----------------------------------
 
-async function start() {
+async function start(userNames) {
 
 	console.log(chalk.keyword('orange')('Start\n'));
-	console.log(`List of users: ${chalk.keyword('chocolate')(screen_name_collection)}\n`);
+	console.log(`List of users: ${chalk.keyword('chocolate')(userNames)}\n`);
 
 	//get Twttter limits
 	await getRateLimit();
 
 	// get followers
-	for (const username of screen_name_collection) {
+	for (const username of userNames) {
 		const user = await getUserInfo(username);
 		const followersIDs = await getFollowersIDsByName(user);
 		const followersList = await getUsersInfoByID(user, followersIDs);
