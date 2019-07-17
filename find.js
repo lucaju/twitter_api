@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const mongoDB = require('./src/db/mongoDB');
 const tweetSchema = require('./src/schemas/tweet');
 
+const mongoQuery = require('./src/config/config.find.json');
+
 
 process.title = 'Find Tweets';
 
@@ -13,16 +15,26 @@ const collection = 'housing';								//collection		STRING
 
 const query = {
 	// 'user.name': 'Francesco Marino',						//name				STRING
-	// lang: 'it',											//lang				STRING
+	// 'text': 'black',										//text				STRING - search *like* regex
 	// retweeted: false,									//retweeted			BOOLEAN
+	// lang: 'it',											//lang				STRING
 	// 'place.country': 'Italy',							//country.country	STRING
 	// 'place.name': 'Naples',								//placename			STRING
 	// 'entities.hashtags.text': ['italia', 'racism'],		//hastags			ARRAY[STRING]
-	// 'text': /bastardi/i,									//text				STRING - search *like* regex 
 	// created_at:  {										//created_at		OBJECT {START/END: DATE|STRING}
 	// 	start: '2019-04-04',
 	// 	end: '2019-04-10'
 	// }
+};
+
+const options = {
+	limit: 10,
+	selectedFields: [
+		'created_at',
+		'text',
+		'user.name',
+		'entities.hashtags.text'
+	]
 };
 
 const find = async (collection, query) => {
@@ -33,6 +45,12 @@ const find = async (collection, query) => {
 	console.log(chalk.magenta(`${process.title}\n`));
 	console.log(chalk.magenta(`Collection: ${collection}\n`));
 
+	//model
+	const Tweets = mongoose.model(`${collection}-tweet`, tweetSchema);
+
+	//get total documents
+	const totalDocuments = await Tweets.estimatedDocumentCount();
+
 	//date period
 	if (query.created_at) query.created_at = getDate(query.created_at);
 
@@ -40,24 +58,23 @@ const find = async (collection, query) => {
 	const hashtags = getHashtags(query['entities.hashtags.text']);
 	delete query['entities.hashtags.text'];
 
+	//text regex
+	if (query.text) query.text = {$regex: query.text, $options: 'i'};
+
 	console.log(chalk.blue('Query:'));
 	console.log(query);
 	console.log(`Hashtags: ${hashtags}`);
 
-	//model
-	const Tweets = mongoose.model(`${collection}-tweet`, tweetSchema);
-
-	//get total documents
-	const totalDocuments = await Tweets.estimatedDocumentCount();
-	console.log(`Total items in ${collection}-tweets: ${totalDocuments}`);
-
 	//Options
-	const limit = totalDocuments;
-	const selectedFiled = ['created_at', 'text', 'user.name', 'entities.hashtags.text'];
+	const limit = options.limit > 0 ? options.limit : totalDocuments;
+	const selectedFiled = options.selectedFields.length > 0 ? options.selectedFields : {};
+
+	console.log(`Total items in ${collection}-tweets: ${totalDocuments}`);
+	console.log(`Limit: ${limit} | selectedFiled: ${selectedFiled}`);
 
 	//QUERY
 	const results = await Tweets.find(query).and(hashtags).limit(limit).select(selectedFiled);
-	// console.log(results);
+	console.log(results);
 
 	mongoDB.close();
 
