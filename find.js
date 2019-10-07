@@ -1,5 +1,8 @@
 require('dotenv').config();
 const chalk = require('chalk');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const fs = require('fs-extra');
+const jsonfile = require('jsonfile');
 const mongoose = require('mongoose');
 
 const mongoDB = require('./src/db/mongoDB');
@@ -21,14 +24,14 @@ const query = {
 	// 'place.country': 'Italy',							//country.country	STRING
 	// 'place.name': 'Naples',								//placename			STRING
 	// 'entities.hashtags.text': ['italia', 'racism'],		//hastags			ARRAY[STRING]
-	// created_at:  {										//created_at		OBJECT {START/END: DATE|STRING}
-	// 	start: '2019-04-04',
-	// 	end: '2019-04-10'
-	// }
+	created_at:  {										//created_at		OBJECT {START/END: DATE|STRING}
+		start: '2019-04-04',
+		end: '2019-04-10'
+	}
 };
 
 const options = {
-	limit: 10,
+	// limit: 10,
 	selectedFields: [
 		'created_at',
 		'text',
@@ -74,7 +77,10 @@ const find = async (collection, query) => {
 
 	//QUERY
 	const results = await Tweets.find(query).and(hashtags).limit(limit).select(selectedFiled);
-	console.log(results);
+	// console.log(results);
+
+	// saveJson(results);
+	parseForNetwork(results);
 
 	mongoDB.close();
 
@@ -108,6 +114,67 @@ const getDate = dates => {
 
 	return period;
 
+};
+
+const saveJson = async data => {
+
+	const folder = './results/find';
+	const fileName = 'results.json';
+
+	if (!fs.existsSync(folder)) fs.mkdirSync(folder);
+
+	const jsonOptions = { spaces: 4 };
+
+	//Save Json file
+	await jsonfile.writeFile(`${folder}/${fileName}`, data, jsonOptions);
+
+	console.log (chalk.green(`JSON file saved at ${folder}`));
+
+};
+
+const parseForNetwork = async data => {
+	const relationship = [];
+
+	// console.log(data[0].toObject())
+	
+	for (const tweet of data) {
+
+		const tw = tweet.toObject();
+
+		// if (!tw.entities) continue;
+
+		if (tw.entities.hashtags.length === 0) continue;
+		
+		const name = tw.user.name;
+
+		for (const hashtag of tw.entities.hashtags) {
+			relationship.push({
+				source: name,
+				target: hashtag.text
+			})
+		}
+
+	}
+
+	// console.log(relationship);
+
+	const csvWriter = createCsvWriter({
+		path: 'results/find/results.csv',
+		header: [
+			{id: 'source', title: 'SOURCE'},
+			{id: 'target', title: 'TARGET'}
+		]
+	});
+	 
+	// const records = [
+	// 	{name: 'Bob',  lang: 'French, English'},
+	// 	{name: 'Mary', lang: 'English'}
+	// ];
+	 
+	csvWriter.writeRecords(relationship)       // returns a promise
+		.then(() => {
+			console.log('...Done');
+		});
 };
 
 
