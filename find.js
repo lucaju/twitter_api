@@ -33,10 +33,10 @@ const query = {
 const options = {
 	// limit: 10,
 	selectedFields: [
-		'created_at',
-		'text',
-		'user.name',
-		'entities.hashtags.text'
+		// 'created_at',
+		// 'text',
+		// 'user.name',
+		// 'entities.hashtags.text'
 	]
 };
 
@@ -80,7 +80,8 @@ const find = async (collection, query) => {
 	// console.log(results);
 
 	// saveJson(results);
-	parseForNetwork(results);
+	// parseHashtagNetwork(results);
+	parseUserNetwork(results);
 
 	mongoDB.close();
 
@@ -132,7 +133,7 @@ const saveJson = async data => {
 
 };
 
-const parseForNetwork = async data => {
+const parseHashtagNetwork = async data => {
 	const relationship = [];
 
 	// console.log(data[0].toObject())
@@ -156,26 +157,49 @@ const parseForNetwork = async data => {
 
 	}
 
-	// console.log(relationship);
+	saveCSV(relationship, 'hashtag_network');
+};
+
+const parseUserNetwork = async data => {
+	
+	const relationship = [];
+
+	for (const tweet of data) {
+
+		const tw = tweet.toObject();
+
+		// console.log(tw);
+
+		if (tw.is_quote_status === true && tw.quoted_status) {;
+		
+			const source = tw.user.name;
+			console.log(tw.quoted_status.user.name);
+			console.log('------');
+			const target = tw.quoted_status.user.name;
+
+			relationship.push({source, target})
+		}
+
+	}
+
+	saveCSV(relationship, 'user_network');
+};
+
+const saveCSV = (data, filename) => {
 
 	const csvWriter = createCsvWriter({
-		path: 'results/find/results.csv',
+		path: `results/find/${filename}.csv`,
 		header: [
 			{id: 'source', title: 'SOURCE'},
 			{id: 'target', title: 'TARGET'}
 		]
 	});
 	 
-	// const records = [
-	// 	{name: 'Bob',  lang: 'French, English'},
-	// 	{name: 'Mary', lang: 'English'}
-	// ];
-	 
-	csvWriter.writeRecords(relationship)       // returns a promise
+	csvWriter.writeRecords(data)       // returns a promise
 		.then(() => {
 			console.log('...Done');
 		});
-};
+}
 
 
 find(collection, query);
