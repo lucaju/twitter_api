@@ -19,7 +19,7 @@
 	},
 	"dependencies": {
 		"argv": "0.0.2",
-		"chalk": "^2.4.2",
+		"chalk": "^3.0.0",
 		"cli-progress": "^3.4.0",
 		"csv-writer": "^1.5.0",
 		"dotenv": "^8.2.0",
@@ -29,7 +29,7 @@
 		"inquirer": "^7.0.0",
 		"jsonfile": "^5.0.0",
 		"lodash": "^4.17.15",
-		"luxon": "^1.21.2",
+		"luxon": "^1.21.3",
 		"mongoose": "^5.7.6",
 		"ora": "^4.0.3",
 		"readline-async": "^0.1.0",
