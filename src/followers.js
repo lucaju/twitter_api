@@ -36,7 +36,7 @@ let rateLimits = {};
 
 //----------------------------------
 
-//Initical Setup
+//Initial Setup
 (async () => {
 
 	let userNames;
@@ -47,19 +47,15 @@ let rateLimits = {};
 		if (runtimeArgv.users[0] == '') return console.log(chalk.red('You must list at least one user!'));
 
 		userNames = runtimeArgv.users;
-		if(runtimeArgv.useJSON != undefined) useJSON = runtimeArgv.useJSON;
-		if(runtimeArgv.useDB != undefined) useDB = runtimeArgv.useDB;
-
-		start(userNames);
+		if (runtimeArgv.useJSON !== undefined) useJSON = runtimeArgv.useJSON;
+		if (runtimeArgv.useDB !== undefined) useDB = runtimeArgv.useDB;
 
 	} else if (config.users.length > 0) {
 
 		// Get data from Json 
 		userNames = config.users;
-		if(config.useJSON != undefined) useJSON = config.useJSON;
-		if(config.useDB != undefined) useDB = config.useDB;
-
-		start(userNames);
+		if (config.useJSON !== undefined) useJSON = config.useJSON;
+		if (config.useDB !== undefined) useDB = config.useDB;
 
 	} else {
 
@@ -70,9 +66,10 @@ let rateLimits = {};
 		useJSON = result.useJSON;
 		useDB = result.useDB;
 
-		start(userNames);
-	
 	}
+
+	start(userNames);
+
 })();
 
 
