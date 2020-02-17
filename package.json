@@ -1,6 +1,6 @@
 {
 	"name": "twitter_api",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Tools for collect Twitter data",
 	"keywords": [
 		"Twitter"
@@ -13,29 +13,40 @@
 	},
 	"main": "index.js",
 	"scripts": {
-		"followers": "env-cmd node followers",
-		"stream": "env-cmd node stream",
-		"find": "env-cmd node find"
+		"cm": "git-cz",
+		"followers": "env-cmd node ./src/followers",
+		"stream": "env-cmd node ./src/stream",
+		"find": "env-cmd node ./src/find"
 	},
 	"dependencies": {
 		"argv": "0.0.2",
 		"chalk": "^3.0.0",
-		"cli-progress": "^3.4.0",
-		"csv-writer": "^1.5.0",
+		"cli-progress": "^3.6.0",
+		"csv-writer": "^1.6.0",
 		"dotenv": "^8.2.0",
-		"env-cmd": "^10.0.1",
-		"figures": "^3.1.0",
+		"env-cmd": "^10.1.0",
+		"figures": "^3.2.0",
 		"fs-extra": "^8.1.0",
-		"inquirer": "^7.0.0",
+		"inquirer": "^7.0.4",
 		"jsonfile": "^5.0.0",
 		"lodash": "^4.17.15",
-		"luxon": "^1.21.3",
-		"mongoose": "^5.7.13",
+		"luxon": "^1.22.0",
+		"mongoose": "^5.9.1",
 		"ora": "^4.0.3",
 		"readline-async": "^0.1.0",
 		"single-line-log": "^1.1.2",
 		"tiny-timer": "^1.4.0",
 		"twit": "^2.2.11",
 		"twitter-stream-channels": "^1.0.1"
+	},
+	"devDependencies": {
+		"commitizen": "^4.0.3",
+		"eslint": "^6.8.0",
+		"git-cz": "^4.3.1"
+	},
+	"config": {
+		"commitizen": {
+			"path": "git-cz"
+		}
 	}
 }
