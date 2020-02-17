@@ -5,10 +5,10 @@ const fs = require('fs-extra');
 const jsonfile = require('jsonfile');
 const mongoose = require('mongoose');
 
-const mongoDB = require('./src/db/mongoDB');
-const tweetSchema = require('./src/schemas/tweet');
+const mongoDB = require('./db/mongoDB');
+const tweetSchema = require('./schemas/tweet');
 
-const mongoQuery = require('./src/config/config.find.json');
+const mongoQuery = require('./config/config.find.json');
 
 
 process.title = 'Find Tweets';
@@ -23,10 +23,10 @@ const query = {
 	// lang: 'it',											//lang				STRING
 	// 'place.country': 'Italy',							//country.country	STRING
 	// 'place.name': 'Naples',								//placename			STRING
-	// 'entities.hashtags.text': ['italia', 'racism'],		//hastags			ARRAY[STRING]
+	// 'entities.hashtags.text': ['Napoli'],		//hastags			ARRAY[STRING]
 	created_at:  {										//created_at		OBJECT {START/END: DATE|STRING}
 		start: '2019-04-04',
-		end: '2019-04-10'
+		end: '2019-04-11'
 	}
 };
 
@@ -39,6 +39,8 @@ const options = {
 		// 'entities.hashtags.text'
 	]
 };
+
+
 
 const find = async (collection, query) => {
 
@@ -76,8 +78,12 @@ const find = async (collection, query) => {
 	console.log(`Limit: ${limit} | selectedFiled: ${selectedFiled}`);
 
 	//QUERY
-	const results = await Tweets.find(query).and(hashtags).limit(limit).select(selectedFiled);
-	// console.log(results);
+	const results = await Tweets.find(query)
+		.and(hashtags)
+		.limit(limit)
+		.select(selectedFiled);
+
+	console.log(results.length);
 
 	// saveJson(results);
 	// parseHashtagNetwork(results);
@@ -120,7 +126,7 @@ const getDate = dates => {
 const saveJson = async data => {
 
 	const folder = './results/find';
-	const fileName = 'results.json';
+	const fileName = 'results_partial.json';
 
 	if (!fs.existsSync(folder)) fs.mkdirSync(folder);
 
@@ -157,7 +163,7 @@ const parseHashtagNetwork = async data => {
 
 	}
 
-	saveCSV(relationship, 'hashtag_network');
+	saveCSV(relationship, 'hashtag_network_partial');
 };
 
 const parseUserNetwork = async data => {
@@ -182,7 +188,7 @@ const parseUserNetwork = async data => {
 
 	}
 
-	saveCSV(relationship, 'user_network');
+	saveCSV(relationship, 'user_network_partial');
 };
 
 const saveCSV = (data, filename) => {

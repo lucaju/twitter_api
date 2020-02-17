@@ -11,13 +11,13 @@ const mongoose = require('mongoose');
 const Timer = require('tiny-timer');
 const Twitter = require('twit');
 
-const {runtimeArgv} = require('./src/followers/runtime-argv');
-const {runtimeInquerer} = require('./src/followers/runtime-inquerer');
+const {runtimeArgv} = require('./followers/runtime-argv');
+const {runtimeInquerer} = require('./followers/runtime-inquerer');
 
-const followersSchema = require('./src/schemas/followers');
-const mongoDB = require('./src/db/mongoDB');
+const followersSchema = require('./schemas/followers');
+const mongoDB = require('./db/mongoDB');
 
-const config = require('./src/config/config.followers.json');
+const config = require('./config/config.followers.json');
 
 //----------Init
 

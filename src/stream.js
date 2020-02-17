@@ -7,10 +7,10 @@ const ora = require('ora');
 const readlineAsync = require('readline-async');
 const TwitterStreamChannels = require('twitter-stream-channels');
 
-const mongoDB = require('./src/db/mongoDB');
-const tweetSchema = require('./src/schemas/tweet');
+const mongoDB = require('./db/mongoDB');
+const tweetSchema = require('./schemas/tweet');
 
-const streamWatchList = require('./src/config/config.stream.json');
+const streamWatchList = require('./config/config.stream.json');
 
 
 process.title = 'Node Twitter Stream';
