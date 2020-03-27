@@ -1,6 +1,6 @@
 {
 	"name": "twitter_api",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"description": "Tools for collect Twitter data",
 	"keywords": [
 		"Twitter"
@@ -26,12 +26,12 @@
 		"dotenv": "^8.2.0",
 		"env-cmd": "^10.1.0",
 		"figures": "^3.2.0",
-		"fs-extra": "^8.1.0",
-		"inquirer": "^7.0.4",
-		"jsonfile": "^5.0.0",
+		"fs-extra": "^9.0.0",
+		"inquirer": "^7.1.0",
+		"jsonfile": "^6.0.1",
 		"lodash": "^4.17.15",
-		"luxon": "^1.22.0",
-		"mongoose": "^5.9.1",
+		"luxon": "^1.22.2",
+		"mongoose": "^5.9.6",
 		"ora": "^4.0.3",
 		"readline-async": "^0.1.0",
 		"single-line-log": "^1.1.2",
@@ -42,7 +42,8 @@
 	"devDependencies": {
 		"commitizen": "^4.0.3",
 		"eslint": "^6.8.0",
-		"git-cz": "^4.3.1"
+		"git-cz": "^4.3.1",
+		"nodemon": "^2.0.2"
 	},
 	"config": {
 		"commitizen": {
