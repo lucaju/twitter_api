@@ -52,9 +52,7 @@ As a way to manage MongoDB, I suggest using MongoDB Compass: [https://www.mongod
 On your *.env* file add the following:
 
 ```env
-useLocalDB=true
-MONGODB_LOCAL_URL=mongodb://127.0.0.1:27017/your_database
-MONGODB_REMOTE_URL=your_remote_server/your_database
+MONGODB_URI=mongodb://127.0.0.1:27017/your_database
 ```
 
 ##### Note: Change useLocalDB to "false" to use your remote server
