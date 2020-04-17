@@ -229,7 +229,7 @@ const getUsersInfoByID = async (userInfo, idList) => {
 
 	//------------ finally
 	console.log(chalk.cyan(`Number of Followers: ${userlist.length}\n`));
-	
+
 
 	//save list as json
 	// saveJson('followers-info', userInfo, userlist);
@@ -358,7 +358,7 @@ const saveJson = async user => {
 	//Save Json file
 	await jsonfile.writeFile(`${folder}/${fileName}`, user, jsonOptions);
 
-	console.log (chalk.green(`JSON file saved at ${folder}`));
+	console.log(chalk.green(`JSON file saved at ${folder}`));
 
 };
 
@@ -388,11 +388,11 @@ const saveToDB = async user => {
 
 	mongoDB.close();
 
-	console.log (chalk.green('User saved to MongoDB'));
+	console.log(chalk.green('User saved to MongoDB'));
 
 };
 
 const convertDate = followers => {
-	followers.forEach(user => user.created_at = new Date(user.created_at) );
+	followers.forEach(user => user.created_at = new Date(user.created_at));
 	return followers;
 };

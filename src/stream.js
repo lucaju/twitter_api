@@ -17,7 +17,7 @@ process.title = 'Node Twitter Stream';
 
 //----------Init
 
-const spinner = ora({ spinner: 'dots' });
+const spinner = ora({spinner: 'dots'});
 
 const twitter = new TwitterStreamChannels({
 	consumer_key: process.env.twitter_consumer_key,
@@ -35,7 +35,7 @@ let stream;
 	await mongoDB.connect();
 
 	// Start stream
-	stream = twitter.streamChannels({ track: streamWatchList });
+	stream = twitter.streamChannels({track: streamWatchList});
 
 	//
 	console.log(chalk.magenta('Twitter stream opened.\n'));
@@ -48,7 +48,7 @@ let stream;
 	for (const ch in streamWatchList) {
 
 		console.log(chalk.blue(ch));
-		streamWatchList[ch].forEach( keyword => console.log(chalk.green(`  ${keyword}`)) );
+		streamWatchList[ch].forEach(keyword => console.log(chalk.green(`  ${keyword}`)));
 
 		//Process each channel in separate listeners like these.
 		stream.on(`channels/${ch}`, tweet => {
@@ -63,12 +63,12 @@ let stream;
 
 const processTweet = async (tweetData, channel) => {
 	tweetData = fixAttributes(tweetData);
-	
+
 	const TweetModel = mongoose.model(`${channel}-tweet`, tweetSchema);
 	const tweet = new TweetModel(tweetData);
 	await tweet.save();
-	
-	logToConsole(tweet,channel);
+
+	logToConsole(tweet, channel);
 	spinner.start();
 };
 
@@ -81,14 +81,14 @@ const fixAttributes = tweet => {
 
 	delete tweet.$keywords;
 	delete tweet.$channels;
-	
+
 	return tweet;
 };
 
 const logToConsole = ({entities}, channel) => {
 
 	const now = luxon.DateTime.local();
-	const hastags = entities.hashtags.map( tag => tag.text);
+	const hastags = entities.hashtags.map(tag => tag.text);
 
 	console.log(
 		chalk.grey(`[${now.toLocaleString(luxon.DateTime.DATETIME_MED)}]`),
@@ -112,7 +112,7 @@ const consoleListener = async () => {
 
 const closeStream = () => {
 	spinner.stop();
-	stream.stop();//closes the stream connected to Twitter
+	stream.stop(); //closes the stream connected to Twitter
 	mongoDB.close();
 	console.log('Twitter stream closed');
 };

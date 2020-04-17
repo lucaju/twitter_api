@@ -7,7 +7,7 @@ const connect = async () => {
 		useUnifiedTopology: true,
 		useCreateIndex: true,
 		useFindAndModify: false
-	}).catch( err => {
+	}).catch(err => {
 		console.log(chalk.red(err.name));
 		return false;
 	});
