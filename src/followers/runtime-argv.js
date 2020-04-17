@@ -4,7 +4,7 @@ const argvOptions = [
 	{
 		name: 'users',
 		type: 'csv,string',
-		description: 'Defines the usernames',
+		description: 'Define usernames',
 		example: '"script --users=value1,value2"'
 	},
 	{
@@ -26,6 +26,4 @@ const argvOptions = [
 const args = argv.option(argvOptions).run();
 const runtimeArgv = args.options;
 
-module.exports = {
-	runtimeArgv
-};
+module.exports = runtimeArgv

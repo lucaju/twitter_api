@@ -15,7 +15,6 @@ const streamWatchList = require('./config/config.stream.json');
 
 process.title = 'Node Twitter Stream';
 
-
 //----------Init
 
 const spinner = ora({ spinner: 'dots' });
@@ -28,7 +27,6 @@ const twitter = new TwitterStreamChannels({
 });
 
 let stream;
-
 
 
 (async () => {

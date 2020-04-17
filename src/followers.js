@@ -11,8 +11,8 @@ const mongoose = require('mongoose');
 const Timer = require('tiny-timer');
 const Twitter = require('twit');
 
-const {runtimeArgv} = require('./followers/runtime-argv');
-const {runtimeInquerer} = require('./followers/runtime-inquerer');
+const runtimeArgv = require('./followers/runtime-argv');
+const runtimeInquerer = require('./followers/runtime-inquerer');
 
 const followersSchema = require('./schemas/followers');
 const mongoDB = require('./db/mongoDB');
@@ -28,11 +28,9 @@ const twitter = new Twitter({
 	access_token_secret: process.env.twitter_access_token_secret
 });
 
-
 let useJSON = true;
 let useDB = false;
 let rateLimits = {};
-
 
 //----------------------------------
 
@@ -115,9 +113,7 @@ const getUserInfo = async user => {
 	const endpoint = '/users/show';
 
 	//parameters
-	const params = {
-		screen_name: user
-	};
+	const params = { screen_name: user };
 
 	//check locally stored limit (wait for new window if needed)
 	await checkLimit(familyResource, `${endpoint}/:id`);
