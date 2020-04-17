@@ -20,8 +20,8 @@
 	},
 	"dependencies": {
 		"argv": "0.0.2",
-		"chalk": "^3.0.0",
-		"cli-progress": "^3.6.0",
+		"chalk": "^4.0.0",
+		"cli-progress": "^3.7.0",
 		"csv-writer": "^1.6.0",
 		"dotenv": "^8.2.0",
 		"env-cmd": "^10.1.0",
@@ -30,8 +30,8 @@
 		"inquirer": "^7.1.0",
 		"jsonfile": "^6.0.1",
 		"lodash": "^4.17.15",
-		"luxon": "^1.22.2",
-		"mongoose": "^5.9.6",
+		"luxon": "^1.23.0",
+		"mongoose": "^5.9.9",
 		"ora": "^4.0.3",
 		"readline-async": "^0.1.0",
 		"single-line-log": "^1.1.2",
@@ -40,10 +40,9 @@
 		"twitter-stream-channels": "^1.0.1"
 	},
 	"devDependencies": {
-		"commitizen": "^4.0.3",
+		"commitizen": "^4.0.4",
 		"eslint": "^6.8.0",
-		"git-cz": "^4.3.1",
-		"nodemon": "^2.0.2"
+		"git-cz": "^4.3.1"
 	},
 	"config": {
 		"commitizen": {
