@@ -1,7 +1,6 @@
 require('dotenv').config();
 const chalk = require('chalk');
 const chunk = require('lodash/chunk');
-const concat = require('lodash/concat');
 const flattenDeep = require('lodash/flattenDeep');
 const fs = require('fs-extra');
 const jsonfile = require('jsonfile');
@@ -22,10 +21,10 @@ const config = require('./config/config.followers.json');
 //----------Init
 
 const twitter = new Twitter({
-	consumer_key: process.env.twitter_consumer_key,
-	consumer_secret: process.env.twitter_consumer_secret,
-	access_token: process.env.twitter_access_token,
-	access_token_secret: process.env.twitter_access_token_secret
+  consumer_key: process.env.twitter_consumer_key,
+  consumer_secret: process.env.twitter_consumer_secret,
+  access_token: process.env.twitter_access_token,
+  access_token_secret: process.env.twitter_access_token_secret,
 });
 
 let useJSON = true;
@@ -36,363 +35,288 @@ let rateLimits = {};
 
 //Initial Setup
 (async () => {
+  let userNames;
 
-	let userNames;
+  if (runtimeArgv.users) {
+    userNames = parseCLI();
+  } else if (config.users.length > 0) {
+    userNames = parseConfigFile();
+  } else {
+    userNames = parseRealtimeInquerer();
+  }
 
-	if (runtimeArgv.users) {
-
-		// Parse CLI variables
-		if (runtimeArgv.users[0] == '') return console.log(chalk.red('You must list at least one user!'));
-
-		userNames = runtimeArgv.users;
-		if (runtimeArgv.useJSON !== undefined) useJSON = runtimeArgv.useJSON;
-		if (runtimeArgv.useDB !== undefined) useDB = runtimeArgv.useDB;
-
-	} else if (config.users.length > 0) {
-
-		// Get data from Json 
-		userNames = config.users;
-		if (config.useJSON !== undefined) useJSON = config.useJSON;
-		if (config.useDB !== undefined) useDB = config.useDB;
-
-	} else {
-
-		// ask - setup question in the beginning
-		const result = await runtimeInquerer();
-
-		userNames = result.users.split(',');
-		useJSON = result.useJSON;
-		useDB = result.useDB;
-
-	}
-
-	start(userNames);
-
+  start(userNames);
 })();
 
+function parseCLI() {
+  if (runtimeArgv.users[0] == '') {
+    return console.log(chalk.red('You must list at least one user!'));
+  }
+  if (runtimeArgv.useJSON !== undefined) useJSON = runtimeArgv.useJSON;
+  if (runtimeArgv.useDB !== undefined) useDB = runtimeArgv.useDB;
+
+  return runtimeArgv.users;
+}
+
+function parseConfigFile() {
+  if (config.useJSON !== undefined) useJSON = config.useJSON;
+  if (config.useDB !== undefined) useDB = config.useDB;
+
+  return config.users;
+}
+
+async function parseRealtimeInquerer() {
+  const result = await runtimeInquerer();
+
+  useJSON = result.useJSON;
+  useDB = result.useDB;
+
+  return result.users.split(',');
+}
 
 //----------------------------------
 
 async function start(userNames) {
+  console.log(chalk.keyword('orange')('Start\n'));
+  console.log(`List of users: ${chalk.keyword('chocolate')(userNames)}\n`);
 
-	console.log(chalk.keyword('orange')('Start\n'));
-	console.log(`List of users: ${chalk.keyword('chocolate')(userNames)}\n`);
+  await getRateLimit();
 
-	//get Twttter limits
-	await getRateLimit();
+  // get followers
+  for (const username of userNames) {
+    const user = await getUserInfo(username);
+    const followersIDs = await getFollowersIDsByName(user);
+    const followersList = await getUsersInfoByID(user, followersIDs);
 
-	// get followers
-	for (const username of userNames) {
-		const user = await getUserInfo(username);
-		const followersIDs = await getFollowersIDsByName(user);
-		const followersList = await getUsersInfoByID(user, followersIDs);
+    //user results
+    user.collected_at = new Date();
+    user.followers = followersList;
 
-		//user results
-		user.collected_at = new Date();
-		user.followers = followersList;
+    if (useJSON) await saveJson(user);
+    if (useDB) await saveToDB(user);
 
-		if (useJSON) await saveJson(user);
-		if (useDB) await saveToDB(user);
+    console.log('----------------\n');
+  }
 
-		console.log('----------------\n');
-	}
-
-	console.log(chalk.keyword('orange')('\nEnd'));
+  console.log(chalk.keyword('orange')('\nEnd'));
 }
 
-
 //----------------------------------
 
+const getUserInfo = async (user) => {
+  console.log(chalk.blue(`Fetching ${user}'s info\n`));
 
-const getUserInfo = async user => {
+  const familyResource = 'users';
+  const endpoint = '/users/show';
+  const params = { screen_name: user };
 
-	console.log(chalk.blue(`Fetching ${user}'s info\n`));
+  //check locally stored limit (wait for new window if needed)
+  await checkLimit(familyResource, `${endpoint}/:id`);
+  rateLimits[familyResource][`${endpoint}/:id`].remaining--;
 
-	//set endpoint
-	const familyResource = 'users';
-	const endpoint = '/users/show';
+  const results = await twitter.get(endpoint, params);
+  // console.log(results.data);
 
-	//parameters
-	const params = { screen_name: user };
-
-	//check locally stored limit (wait for new window if needed)
-	await checkLimit(familyResource, `${endpoint}/:id`);
-
-	//decrease remaining calls available
-	// console.log('current limit: ', rateLimits[familyResource][endpoint].remaining);
-	rateLimits[familyResource][`${endpoint}/:id`].remaining--;
-
-	//Call Twitter API
-	const results = await twitter.get(endpoint, params);
-
-	// console.log(results.data);
-	return results.data;
-
+  return results.data;
 };
 
-
 //----------------------------------
-
 
 // get followers ID
-const getFollowersIDsByName = async userInfo => {
+const getFollowersIDsByName = async (userInfo) => {
+  console.log(chalk.blue(`Fetching ${userInfo.screen_name}'s Followers (IDs)`));
 
-	console.log(chalk.blue(`Fetching ${userInfo.screen_name}'s Followers (IDs)`));
+  let idList = [];
 
-	//set list to store all IDs
-	let idList = [];
+  const requestParams = {
+    screen_name: userInfo.screen_name,
+    stringify_ids: true,
+    count: 5000, //max: 5000,
+    cursor: -1,
+  };
 
-	//build Twitter API request
-	let requestParams = {
-		screen_name: userInfo.screen_name,
-		stringify_ids: true,
-		count: 5000, //max: 5000,
-		cursor: -1,
-	};
+  //repeated calls while exist pages of followers available
+  while (requestParams.cursor != 0) {
+    const res = await getFollowers(requestParams);
 
-	//repeated calls while exist pages of followers available
-	while (requestParams.cursor != 0) {
+    //save cursor and data
+    requestParams.cursor = res.data.next_cursor_str;
+    idList = [...idList, ...res.data.ids];
 
-		//call funcion to access API
-		const res = await getFollowers(requestParams);
+    //save partial list
+    // if (useJSON) saveJson('followers-ids-partial', userInfo, idList);
 
-		//save cursor and data
-		requestParams.cursor = res.data.next_cursor_str;
-		idList = concat(idList, res.data.ids);
+    console.log(chalk.gray(`  Number of Followers (IDs) (partial): ${idList.length}`));
+  }
 
-		//save partial list
-		// if (useJSON) saveJson('followers-ids-partial', userInfo, idList);
+  //------------ finally
+  console.log(chalk.cyan(`Number of Followers (IDs): ${idList.length}\n`));
 
-		console.log(chalk.gray(`  Number of Followers (IDs) (partial): ${idList.length}`));
-	}
+  //save list as json
+  // if (useJSON) saveJson('followers-ids', userInfo, idList);
 
-	//------------ finally
-	console.log(chalk.cyan(`Number of Followers (IDs): ${idList.length}\n`));
+  // if (useJSON) removePartialResultsFile(userInfo, 'followers-ids-partial');
 
-	//save list as json
-	// if (useJSON) saveJson('followers-ids', userInfo, idList);
-
-	//remove partial
-	// if (useJSON) removePartialResultsFile(userInfo, 'followers-ids-partial');
-
-	//return
-	return idList;
-
+  return idList;
 };
 
-const getFollowers = async params => {
+const getFollowers = async (params) => {
+  const familyResource = 'followers';
+  const endpoint = '/followers/ids';
 
-	//set endpoint
-	const familyResource = 'followers';
-	const endpoint = '/followers/ids';
+  //check locally stored limit (wait for new window if needed)
+  await checkLimit(familyResource, endpoint);
+  rateLimits[familyResource][endpoint].remaining--;
 
-	//check locally stored limit (wait for new window if needed)
-	await checkLimit(familyResource, endpoint);
+  const results = twitter.get(endpoint, params);
 
-	//decrease remaining calls available
-	// console.log('current limit: ', rateLimits[familyResource][endpoint].remaining);
-	rateLimits[familyResource][endpoint].remaining--;
-
-	//Call Twitter API
-	// console.log(params);
-	const results = await twitter.get(endpoint, params);
-
-	// console.log(results.data);
-	return results;
-
+  return results;
 };
-
 
 //----------------------------------
 
-
 const getUsersInfoByID = async (userInfo, idList) => {
+  console.log(chalk.blue(`Fetching ${userInfo.screen_name}'s Followers Info`));
+  // create batches of 100
+  idList = chunk(idList, 100);
 
-	console.log(chalk.blue(`Fetching ${userInfo.screen_name}'s Followers Info`));
+  let userlist = [];
 
-	// create batches of 100
-	idList = chunk(idList, 100);
+  for (let L of idList) {
+    const res = await getUsers(L);
+    userlist = [...userlist, res.data];
+    userlist = flattenDeep(userlist);
 
-	//store users info
-	let userlist = [];
+    //save partial list
+    // if (useJSON) saveJson('followers-partial', userInfo, userlist);
 
-	for (let L of idList) {
-		const res = await getUsers(L);
-		userlist = concat(userlist, res.data);
-		userlist = flattenDeep(userlist);
+    console.log(chalk.gray(`  Followers Info (partial): ${userlist.length}`));
+  }
 
-		//save partial list
-		// if (useJSON) saveJson('followers-partial', userInfo, userlist);
+  //------------ finally
+  console.log(chalk.cyan(`Number of Followers: ${userlist.length}\n`));
 
-		console.log(chalk.gray(`  Followers Info (partial): ${userlist.length}`));
-	}
+  //save list as json
+  // saveJson('followers-info', userInfo, userlist);
 
-	//------------ finally
-	console.log(chalk.cyan(`Number of Followers: ${userlist.length}\n`));
+  // if (useJSON) removePartialResultsFile(userInfo, 'followers-partial');
+  // if (useJSON) removePartialResultsFile(userInfo, 'followers-ids');
 
-
-	//save list as json
-	// saveJson('followers-info', userInfo, userlist);
-
-	//remove partial info and list of ids
-	// if (useJSON) removePartialResultsFile(userInfo, 'followers-partial');
-	// if (useJSON) removePartialResultsFile(userInfo, 'followers-ids');
-
-	//resolve
-	return userlist;
-
+  return userlist;
 };
 
-const getUsers = async params => {
+const getUsers = async (params) => {
+  const requestParams = {
+    user_id: params.join(),
+    count: 100, // max: 100
+  };
 
-	//parameters
-	const requestParams = {
-		user_id: params.join(),
-		count: 100 // max: 100
-	};
+  const endpoint = '/users/lookup';
+  const familyResource = 'users';
 
-	//endpoint
-	const endpoint = '/users/lookup';
-	const familyResource = 'users';
+  //check locally stored limit (wait for new window if needed)
+  await checkLimit(familyResource, endpoint);
+  rateLimits[familyResource][endpoint].remaining--;
 
-	//check locally stored limit (wait for new window if needed)
-	await checkLimit(familyResource, endpoint);
+  const result = await twitter.post(endpoint, requestParams);
 
-	//decrease remaining calls available
-	// console.log('current limit: ', rateLimits[familyResource][endpoint].remaining);	
-	rateLimits[familyResource][endpoint].remaining--;
-
-	//Call Twitter API
-	const result = await twitter.post(endpoint, requestParams);
-
-	//continue
-	return result;
+  return result;
 };
 
 //----------------------------------
 
 const checkLimit = async (familyResource, endpoint) => {
+  const resourceremaining = rateLimits[familyResource][endpoint].remaining;
+  // console.log(rateLimits[familyResource][endpoint]);
+  if (resourceremaining > 0) return true;
 
-	//number of calls remaining\
-	const resourceremaining = rateLimits[familyResource][endpoint].remaining;
-	// console.log(rateLimits[familyResource][endpoint]);
+  //waiting next window
+  console.log(
+    chalk.dim(`
+      ------------
+      You have reached the rate limit of this endpoint.
+      Waiting for the next window.
+      Do not close the app!
+      ------------
+    `)
+  );
 
-	//continue if there is resource available
-	if (resourceremaining > 0) return true;
+  const reset = rateLimits[familyResource][endpoint].reset;
+  await timer(reset);
+  await getRateLimit(familyResource, endpoint);
 
-
-	//wait next window
-	console.log(chalk.dim('------------\n You have reached the rate limit of this endpoint. Waiting for the next window. Do not close the app!'));
-
-	// build timer to wait until next window
-	const reset = rateLimits[familyResource][endpoint].reset;
-	await timer(reset);
-
-	//reset local limits.
-	await getRateLimit(familyResource, endpoint);
-
-	//continue
-	return true;
+  return true;
 };
 
-const timer = reset => {
+//transform time to reset into interval (duration)
+const timer = (reset) => {
+  const now = luxon.DateTime.local();
+  const resetTime = luxon.DateTime.fromSeconds(reset);
+  const blockageInterval = luxon.Interval.fromDateTimes(now, resetTime);
 
-	//transform time to reset into interval (duration)
-	const now = luxon.DateTime.local();
-	const resetTime = luxon.DateTime.fromSeconds(reset);
-	const blockageInterval = luxon.Interval.fromDateTimes(now, resetTime);
+  const timer = new Timer();
 
-	// Timer
-	const timer = new Timer();
+  //print time on tick
+  timer.on('tick', (ms) => {
+    const tick = luxon.Duration.fromObject({
+      milliseconds: ms,
+    });
+    log(chalk.yellow(tick.toFormat('m:ss')));
+  });
 
-	timer.on('tick', (ms) => {
-		// const tick = luxon.DateTime.fromMillis(s);
-		//print time
-		const tick = luxon.Duration.fromObject({
-			milliseconds: ms
-		});
-		log(chalk.yellow(tick.toFormat('m:ss')));
-	});
+  timer.on('done', () => 'Timer ended');
 
-	timer.on('done', () => {
-		//end timer
-		return 'Timer ended';
-	});
+  // timer.on('statusChanged', (status) => console.log('status:', status));
 
-	// timer.on('statusChanged', (status) => console.log('status:', status));
-
-	//start timer
-	timer.start(blockageInterval.length('milliseconds'), 1000); // run for 5 seconds
-
+  timer.start(blockageInterval.length('milliseconds'), 1000); // run for 5 seconds
 };
 
 //----------------------------------
 
 async function getRateLimit(familyResource, endpoint) {
+  const params = { resources: familyResource };
+  const rateLimitsStatus = await twitter.get('application/rate_limit_status', params);
 
-	const params = { resources: familyResource };
-	const rateLimitsStatus = await twitter.get('application/rate_limit_status', params);
+  if (familyResource) {
+    rateLimits[familyResource][endpoint] =
+      rateLimitsStatus.data.resources[familyResource][endpoint];
+  } else {
+    rateLimits = rateLimitsStatus.data.resources;
+  }
 
-	if (familyResource) {
-		rateLimits[familyResource][endpoint] = rateLimitsStatus.data.resources[familyResource][endpoint];
-	} else {
-		rateLimits = rateLimitsStatus.data.resources;
-	}
-
-	return rateLimits;
-
+  return rateLimits;
 }
 
 //----------------------------------
 
-const saveJson = async user => {
+const saveJson = async (user) => {
+  const now = luxon.DateTime.local();
+  const folder = './results/followers';
+  const fileName = `${user.screen_name}-${now.toFormat('yyyy-LL-dd')}.json`;
 
-	const now = luxon.DateTime.local();
-	const folder = './results/followers';
-	const fileName = `${user.screen_name}-${now.toFormat('yyyy-LL-dd')}.json`;
+  if (!fs.existsSync(folder)) fs.mkdirSync(folder);
 
-	if (!fs.existsSync(folder)) fs.mkdirSync(folder);
+  const jsonOptions = { spaces: 4 };
+  await jsonfile.writeFile(`${folder}/${fileName}`, user, jsonOptions);
 
-	const jsonOptions = { spaces: 4 };
-
-	//Save Json file
-	await jsonfile.writeFile(`${folder}/${fileName}`, user, jsonOptions);
-
-	console.log(chalk.green(`JSON file saved at ${folder}`));
-
+  console.log(chalk.green(`JSON file saved at ${folder}`));
 };
 
-// const removePartialResultsFile = (user, feature) => {
-// 	const now = luxon.DateTime.local();
-// 	const folder = './results/followers';
-// 	const fileName = `${user.screen_name}-${feature}-${now.toFormat('yyyy-LL-dd')}.json`;
-// 	fs.remove(`${folder}/${fileName}`);
-// };
+const saveToDB = async (user) => {
+  await mongoDB.connect();
 
-//----------------------------------
+  user.followers = convertDate(user.followers);
 
-const saveToDB = async user => {
+  const FollowersModel = mongoose.model('twitter-user-followers', followersSchema);
+  const userModel = new FollowersModel(user);
 
-	//date
-	user.followers = convertDate(user.followers);
+  await userModel.save();
+  mongoDB.close();
 
-	//Start DB
-	await mongoDB.connect();
-
-	//schema - model
-	const FollowersModel = mongoose.model('twitter-user-followers', followersSchema);
-	const userModel = new FollowersModel(user);
-
-	//save
-	await userModel.save();
-
-	mongoDB.close();
-
-	console.log(chalk.green('User saved to MongoDB'));
-
+  console.log(chalk.green('User saved to MongoDB'));
 };
 
-const convertDate = followers => {
-	followers.forEach(user => user.created_at = new Date(user.created_at));
-	return followers;
+const convertDate = (followers) => {
+  followers.forEach((user) => (user.created_at = new Date(user.created_at)));
+  return followers;
 };
