@@ -30,7 +30,7 @@
 		"inquirer": "^7.3.3",
 		"jsonfile": "^6.1.0",
 		"lodash": "^4.17.21",
-		"luxon": "^1.26.0",
+		"luxon": "^1.28.1",
 		"mongoose": "^5.12.7",
 		"ora": "^4.1.1",
 		"readline-async": "^0.1.0",
